@@ -55,7 +55,7 @@ export default function CodePreviewPage() {
     if (isSupported) {
       setLanguage(detectedLanguage)
     }
-  }, [code])
+  }, [code, supportedLanguages])
 
   useEffect(() => {
     // Temporary example code

@@ -13,7 +13,7 @@ export async function streamGroqResponse(
   handlers: {
     onToken: (token: string) => void;
     onComplete: () => void;
-    onError: (error: any) => void;
+    onError: (error: Error) => void;
   }
 ) {
   const groq = new Groq({
@@ -42,7 +42,7 @@ export async function streamGroqResponse(
 
     handlers.onComplete()
   } catch (error) {
-    console.error('Groq API Error:', error)
-    handlers.onError(error)
+    console.error('Groq API Error:', error);
+    handlers.onError(error as Error);
   }
 } 
