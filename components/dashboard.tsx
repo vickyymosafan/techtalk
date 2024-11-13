@@ -320,6 +320,16 @@ const styles = `
   }
 `;
 
+// Tambahkan fungsi untuk mengkopi teks
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    // Optional: Tambahkan feedback visual atau toast notification
+  } catch (err) {
+    console.error('Failed to copy text: ', err)
+  }
+}
+
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [groups, setGroups] = useState<GroupType[]>([])
@@ -1120,12 +1130,24 @@ export function DashboardComponent() {
                             </>
                           )}
                         </Avatar>
-                        <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} flex-1`}>
-                          <div className={`p-2 sm:p-3 rounded-lg break-words ${
+                        <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} flex-1 group`}>
+                          <div className={`relative p-2 sm:p-3 rounded-lg break-words ${
                             message.role === 'user' 
-                              ? 'bg-primary text-primary-foreground prose-sm sm:prose-base max-w-none font-medium'
+                              ? 'bg-primary/90 text-primary-foreground prose-sm sm:prose-base max-w-none font-medium'
                               : 'bg-muted prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed'
                           }`}>
+                            {/* Tambahkan tombol copy untuk pesan AI */}
+                            {message.role === 'assistant' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => copyToClipboard(message.content)}
+                                title="Copy message"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm]}
                               className="markdown-content text-[13px] sm:text-base leading-relaxed tracking-normal"
