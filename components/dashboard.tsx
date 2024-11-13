@@ -319,34 +319,119 @@ const styles = `
     scrollbar-width: none;
   }
   
-  /* Optional: Custom scrollbar styling for desktop */
-  @media (min-width: 640px) {
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+  .prevent-overscroll {
+    overscroll-behavior: none;
+  }
+  
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .ios-height {
+    height: -webkit-fill-available;
+  }
+  
+  .overscroll-contain {
+    overscroll-behavior-y: contain;
+  }
+  
+  .markdown-content {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  .markdown-content > *:first-child {
+    margin-top: 0 !important;
+  }
+  
+  .markdown-content > *:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    line-height: 1.25;
+  }
+  
+  @media (max-width: 640px) {
+    .markdown-content {
+      font-size: 13px;
+      line-height: 1.5;
     }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
+    
+    // Tambahkan padding yang lebih kecil untuk mobile
+    .markdown-content pre {
+      margin: 0.75rem -0.5rem;
+      border-radius: 0.375rem;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: rgba(155, 155, 155, 0.5);
-      border-radius: 3px;
+    
+    // Sesuaikan ukuran font untuk mobile
+    .markdown-content code {
+      font-size: 11px;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(155, 155, 155, 0.7);
+    
+    // Tambahkan safe area padding untuk iOS
+    .safe-area-padding {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    // Fix tinggi viewport untuk mobile
+    .vh-fix {
+      height: 100vh;
+      height: -webkit-fill-available;
+      height: stretch;
     }
   }
 `;
 
-// Tambahkan fungsi untuk mengkopi teks
+// Update fungsi copyToClipboard
 const copyToClipboard = async (text: string) => {
   try {
-    await navigator.clipboard.writeText(text)
-    // Optional: Tambahkan feedback visual atau toast notification
+    // Proses teks untuk mempertahankan hanya format yang diinginkan
+    const processedText = text
+      // Hapus code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      // Hapus inline code
+      .replace(/`[^`]*`/g, '')
+      // Hapus markdown links tapi pertahankan teksnya
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Hapus markdown images
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+      // Pertahankan bold
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      // Hapus italic
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Pertahankan lists dan bullet points
+      .replace(/^\s*[-*+]\s+/gm, '• ')
+      .replace(/^\s*\d+\.\s+/gm, (match) => match)
+      // Bersihkan multiple newlines
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    await navigator.clipboard.writeText(processedText);
+
+    // Visual feedback
+    const button = document.activeElement as HTMLButtonElement;
+    if (button) {
+      const originalContent = button.innerHTML;
+      button.innerHTML = '<svg class="h-2.5 w-2.5 sm:h-3 sm:w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+      setTimeout(() => {
+        button.innerHTML = originalContent;
+      }, 1000);
+    }
   } catch (err) {
-    console.error('Failed to copy text: ', err)
+    console.error('Failed to copy text: ', err);
   }
-}
+};
+
+const inputClassName = "w-full px-2 py-1 text-sm bg-background border rounded focus:outline-none focus:ring-1 focus:ring-primary"
 
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -364,6 +449,9 @@ export function DashboardComponent() {
   const [isEditing, setIsEditing] = useState(false)
   const [editedCode, setEditedCode] = useState('')
   const [currentLanguage, setCurrentLanguage] = useState('javascript')
+  const [isChaining, setIsChaining] = useState(false)
+  const [chainedResponses, setChainedResponses] = useState<{ [key: string]: ChainedResponse[] }>({})
+  const [currentChainCursor, setCurrentChainCursor] = useState(0)
 
   // Tambahkan state untuk hasil eksekusi
   const [executionResult, setExecutionResult] = useState<string>('');
@@ -375,218 +463,71 @@ export function DashboardComponent() {
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const messageContainerRef = React.useRef<HTMLDivElement>(null)
 
-  // Improved scroll to bottom function
-  const scrollToBottom = useCallback((smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: smooth ? 'smooth' : 'auto',
-        block: 'end'
-      })
+  // Add new ref for the last message
+  const lastMessageRef = useRef<HTMLDivElement>(null)
+
+  // Add new ref for main content container
+  const mainContentRef = useRef<HTMLDivElement>(null)
+
+  // Enhanced scroll to bottom function for mobile support
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    if (mainContentRef.current && lastMessageRef.current) {
+      const container = mainContentRef.current
+      const lastMessage = lastMessageRef.current
+      
+      // Get container dimensions
+      const containerHeight = container.clientHeight
+      const scrollTop = container.scrollTop
+      const scrollHeight = container.scrollHeight
+      
+      // Check if we're already near bottom (within 100px) or if force scroll is requested
+      const isNearBottom = scrollHeight - (scrollTop + containerHeight) < 100
+      
+      if (isNearBottom || force) {
+        // Use smooth scroll for iOS
+        if (typeof CSS !== 'undefined' && CSS.supports('scroll-behavior', 'smooth')) {
+          container.style.scrollBehavior = 'smooth'
+          lastMessage.scrollIntoView({ block: 'end' })
+          // Reset scroll behavior after animation
+          setTimeout(() => {
+            container.style.scrollBehavior = 'auto'
+          }, 500)
+        } else {
+          // Fallback for browsers that don't support smooth scrolling
+          container.scrollTo({
+            top: scrollHeight,
+            behavior: 'smooth'
+          })
+        }
+      }
     }
   }, [])
 
-  // Always scroll to bottom when messages change
+  // Add intersection observer for better scroll tracking
   useEffect(() => {
-    if (currentChat && messages[currentChat.id]?.length > 0) {
-      // Use immediate scroll for user messages, smooth for AI responses
-      const isLastMessageFromAI = messages[currentChat.id].slice(-1)[0]?.role === 'assistant'
-      scrollToBottom(isLastMessageFromAI)
-    }
-  }, [messages, currentChat, scrollToBottom])
+    if (!mainContentRef.current) return
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
-
-  const createNewGroup = useCallback(() => {
-    const newGroup: GroupType = {
-      id: `group-${Date.now()}`,
-      name: `Folder ${groups.length + 1}`,
-      chats: [],
-      createdAt: new Date()
-    }
-    setGroups(prevGroups => [...prevGroups, newGroup])
-    setExpandedGroups(prevExpanded => [...prevExpanded, newGroup.id])
-    setNewItems(prev => ({ ...prev, [newGroup.id]: true }))
-    setIsSidebarOpen(true)
-
-    // Tambahkan panduan untuk Folder pertama
-    if (groups.length === 0) {
-      setMessages(prev => ({
-        ...prev,
-        [newGroup.id]: [{
-          role: 'assistant',
-          content: `# Welcome to your first group! 🎉\n\nNow that you've created a group, you can:\n\n1. Click the "New Chat" button below to start a conversation\n2. Use the menu (⋮) to rename or manage your group\n3. Create more groups to organize different topics`
-        }]
-      }))
+    const options = {
+      root: mainContentRef.current,
+      threshold: 0.5
     }
 
-    setTimeout(() => {
-      setNewItems(prev => {
-        const updated = { ...prev }
-        delete updated[newGroup.id]
-        return updated
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && isLoading) {
+          scrollToBottom(true)
+        }
       })
-    }, 5000)
-  }, [groups])
+    }, options)
 
-  const createNewChat = useCallback((groupId: string) => {
-    const types = Object.keys(chatTypes);
-    const randomType = types[Math.floor(Math.random() * types.length)];
-    
-    const newChat: Chat = {
-      id: `chat-${Date.now()}`,
-      name: `New Chat ${groups.find(g => g.id === groupId)?.chats.length ?? 0 + 1}`,
-      createdAt: new Date(),
-      type: randomType as 'general' | 'code' | 'database' | 'ai' | 'system'
+    if (lastMessageRef.current) {
+      observer.observe(lastMessageRef.current)
     }
-    setGroups(prevGroups => 
-      prevGroups.map(group => 
-        group.id === groupId 
-          ? { ...group, chats: [...group.chats, newChat] }
-          : group
-      )
-    )
-    setCurrentChat({
-      ...chatTypes[newChat.type],
-      id: newChat.id,
-      name: newChat.name,
-      createdAt: newChat.createdAt
-    })
-    setMessages(prev => ({ ...prev, [newChat.id]: [] }))
-    setNewItems(prev => ({ ...prev, [newChat.id]: true }))
-    setTimeout(() => {
-      setNewItems(prev => {
-        const updated = { ...prev }
-        delete updated[newChat.id]
-        return updated
-      })
-    }, 5000)
-  }, [groups])
 
-  const toggleGroupExpansion = useCallback((groupId: string) => {
-    setExpandedGroups(prevExpanded => 
-      prevExpanded.includes(groupId)
-        ? prevExpanded.filter(id => id !== groupId)
-        : [...prevExpanded, groupId]
-    )
-  }, [])
+    return () => observer.disconnect()
+  }, [isLoading, scrollToBottom])
 
-  // Add state to track which group or chat is being renamed
-  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
-  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
-  const [newName, setNewName] = useState<string>('');
-
-  // Update the input field styles for renaming
-  const inputClassName = "input-class border border-primary focus:outline-none focus:ring-2 focus:ring-primary";
-
-  // Update renameGroup function to handle inline renaming
-  const renameGroup = useCallback((groupId: string) => {
-    setRenamingGroupId(groupId);
-    const group = groups.find(group => group.id === groupId);
-    setNewName(group?.name || '');
-  }, [groups]);
-
-  const deleteGroup = useCallback((groupId: string) => {
-    const group = groups.find(g => g.id === groupId)
-    
-    // Clear all chats in the group
-    group?.chats.forEach(chat => {
-      // Clear messages
-      setMessages(prev => {
-        const updated = { ...prev }
-        delete updated[chat.id]
-        return updated
-      })
-      
-      // Clear chained responses
-      setChainedResponses(prev => {
-        const updated = { ...prev }
-        delete updated[chat.id]
-        return updated
-      })
-      
-      // Clear from localStorage
-      localStorage.removeItem(`chat-${chat.id}`)
-      localStorage.removeItem(`responses-${chat.id}`)
-    })
-    
-    // Remove group
-    setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId))
-    setExpandedGroups(prevExpanded => prevExpanded.filter(id => id !== groupId))
-    
-    // Reset current chat if it belongs to the deleted group
-    if (currentChat && group?.chats.some(c => c.id === currentChat.id)) {
-      setCurrentChat(null)
-      setCurrentCount(0)
-      setRequestedCount(null)
-      setIsChaining(false)
-      setCurrentChainCursor(0)
-      setCodeContent('')
-      setEditedCode('')
-      setIsEditing(false)
-    }
-    
-    // Clear group from localStorage
-    localStorage.removeItem(`group-${groupId}`)
-  }, [groups, currentChat])
-
-  // Update renameChat function to handle inline renaming
-  const renameChat = useCallback((groupId: string, chatId: string) => {
-    setRenamingChatId(chatId);
-    const group = groups.find(group => group.id === groupId);
-    const chat = group?.chats.find(chat => chat.id === chatId);
-    setNewName(chat?.name || '');
-  }, [groups]);
-
-  const deleteChat = useCallback((groupId: string, chatId: string) => {
-    // Remove chat from groups
-    setGroups(prevGroups =>
-      prevGroups.map(group =>
-        group.id === groupId
-          ? { ...group, chats: group.chats.filter(chat => chat.id !== chatId) }
-          : group
-      )
-    )
-    
-    // Clear all associated data
-    setMessages(prev => {
-      const updated = { ...prev }
-      delete updated[chatId]
-      return updated
-    })
-    
-    setChainedResponses(prev => {
-      const updated = { ...prev }
-      delete updated[chatId]
-      return updated
-    })
-    
-    // Reset current chat if it's the one being deleted
-    if (currentChat && currentChat.id === chatId) {
-      setCurrentChat(null)
-      setCurrentCount(0)
-      setRequestedCount(null)
-      setIsChaining(false)
-      setCurrentChainCursor(0)
-      setCodeContent('')
-      setEditedCode('')
-      setIsEditing(false)
-    }
-    
-    // Clear from localStorage
-    localStorage.removeItem(`chat-${chatId}`)
-    localStorage.removeItem(`responses-${chatId}`)
-  }, [currentChat])
-
-  // Tambahkan state untuk prompt chaining
-  const [chainedResponses, setChainedResponses] = useState<{ [chatId: string]: ChainedResponse[] }>({})
-  const [isChaining, setIsChaining] = useState(false)
-  const [currentChainCursor, setCurrentChainCursor] = useState<number>(0)
-
-  // Tambahkan state untuk melacak jumlah item yang diminta
-  const [requestedCount, setRequestedCount] = useState<number | null>(null)
-  const [currentCount, setCurrentCount] = useState<number>(0)
-
-  // Update handleSendMessage untuk mendukung prompt chaining
+  // Update handleSendMessage
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() && currentChat) {
       const count = extractRequestedCount(inputMessage)
@@ -610,8 +551,11 @@ export function DashboardComponent() {
       if (textarea) {
         textarea.style.height = '2.5rem'
       }
-      
-      scrollToBottom(false)
+
+      // Initial scroll without smooth behavior
+      if (lastMessageRef.current) {
+        lastMessageRef.current.scrollIntoView({ behavior: 'auto', block: 'end' })
+      }
       
       // Start AI response with empty content
       setMessages(prev => ({
@@ -622,11 +566,13 @@ export function DashboardComponent() {
         ]
       }))
 
-      // Sederhanakan prompt untuk menghasilkan data sesuai jumlah yang diminta
       const systemPrompt = count 
         ? `Berikan tepat ${count} item. Format setiap item dengan nomor urut dimulai dari 1.`
         : '';
 
+      // Force scroll to bottom immediately when sending
+      scrollToBottom(true)
+      
       streamGroqResponse(
         [
           ...updatedMessages,
@@ -644,13 +590,13 @@ export function DashboardComponent() {
                 }
               ]
             }))
-            scrollToBottom(true)
+            // Use requestAnimationFrame for smoother scrolling during streaming
+            requestAnimationFrame(() => scrollToBottom(false))
           },
           onComplete: () => {
             setIsLoading(false)
-            const response = messages[currentChat.id]?.slice(-1)[0]?.content || ''
-            const itemCount = (response.match(/^\d+\./gm) || []).length
-            setCurrentCount(itemCount)
+            // Final scroll with force enabled
+            scrollToBottom(true)
           },
           onError: (error) => {
             console.error('Groq API Error:', error)
@@ -671,6 +617,13 @@ export function DashboardComponent() {
       )
     }
   }, [inputMessage, currentChat, messages, scrollToBottom])
+
+  // Add useEffect to handle initial scroll
+  useEffect(() => {
+    if (lastMessageRef.current && messages[currentChat?.id ?? '']?.length) {
+      scrollToBottom()
+    }
+  }, [messages, currentChat, scrollToBottom])
 
   // Update progress indicator
   const renderChainIndicator = () => {
@@ -784,7 +737,12 @@ export function DashboardComponent() {
     }
   }, [currentChat])
 
-  // Function to save the new name
+  // Add these state declarations before the saveNewName function
+  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
+  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+
+  // Now the saveNewName function can use these state variables
   const saveNewName = useCallback(() => {
     if (renamingGroupId) {
       setGroups(prevGroups =>
@@ -822,11 +780,102 @@ export function DashboardComponent() {
     logout()
   }
 
+  const [requestedCount, setRequestedCount] = useState<number | null>(null)
+  const [currentCount, setCurrentCount] = useState(0)
+
+  const createNewGroup = useCallback(() => {
+    const newGroup: GroupType = {
+      id: crypto.randomUUID(),
+      name: `New Folder ${groups.length + 1}`,
+      createdAt: new Date(),
+      chats: []
+    }
+    setGroups(prev => [...prev, newGroup])
+    setExpandedGroups(prev => [...prev, newGroup.id])
+    setIsSidebarOpen(true)
+  }, [groups.length])
+
+  const toggleGroupExpansion = useCallback((groupId: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupId) 
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    )
+  }, [])
+
+  const renameGroup = useCallback((groupId: string) => {
+    const group = groups.find(g => g.id === groupId);
+    if (group) {
+      setNewName(group.name);
+      setRenamingGroupId(groupId);
+    }
+  }, [groups]);
+
+  const deleteGroup = useCallback((groupId: string) => {
+    if (window.confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
+      setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId))
+      if (currentChat && groups.find(g => g.id === groupId)?.chats.some(c => c.id === currentChat.id)) {
+        setCurrentChat(null)
+      }
+    }
+  }, [groups, currentChat])
+
+  const renameChat = useCallback((groupId: string, chatId: string) => {
+    const chat = groups.find(g => g.id === groupId)?.chats.find(c => c.id === chatId);
+    if (chat) {
+      setNewName(chat.name);
+      setRenamingChatId(chatId);
+    }
+  }, [groups]);
+
+  const deleteChat = useCallback((groupId: string, chatId: string) => {
+    if (window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+      setGroups(prevGroups => 
+        prevGroups.map(group => 
+          group.id === groupId 
+            ? { ...group, chats: group.chats.filter(chat => chat.id !== chatId) }
+            : group
+        )
+      )
+      if (currentChat?.id === chatId) {
+        setCurrentChat(null)
+      }
+    }
+  }, [currentChat])
+
+  const createNewChat = useCallback((groupId: string) => {
+    const newChat = {
+      id: crypto.randomUUID(),
+      name: `New Chat ${groups.find(g => g.id === groupId)?.chats.length ?? 0 + 1}`,
+      type: 'general',
+      createdAt: new Date()
+    }
+    
+    setGroups(prevGroups => 
+      prevGroups.map(group => 
+        group.id === groupId 
+          ? { ...group, chats: [...group.chats, newChat] }
+          : group
+      )
+    )
+  }, [groups])
+
+  // Add this near the top of the DashboardComponent function
+  useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+    return () => styleSheet.remove();
+  }, []);
+
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-      <div className="flex vh-fix overflow-hidden bg-background text-foreground prevent-overscroll">
-        {/* Sidebar - Updated height and overflow */}
-        <SheetContent side="left" className="w-full max-w-[280px] sm:w-64 p-0 h-[100dvh] overflow-hidden">
+      <div className="flex vh-fix overflow-hidden bg-background text-foreground">
+        {/* Sidebar - Update width untuk mobile */}
+        <SheetContent 
+          side="left" 
+          className="w-[85%] sm:w-[380px] p-0 h-[100dvh] overflow-hidden"
+        >
           <div className="flex flex-col h-full bg-secondary">
             <div className="p-4 flex items-center space-x-2">
               <Avatar>
@@ -1094,9 +1143,9 @@ export function DashboardComponent() {
           </div>
         </SheetContent>
 
-        {/* Main Content - Add ref to container */}
-        <div className="flex-1 flex flex-col vh-fix overflow-hidden ios-height" ref={messageContainerRef}>
-          <header className="flex-none flex items-center justify-between p-2 sm:p-4 border-b border-gray-400 dark:border-gray-700">
+        {/* Main Content - Update padding dan spacing untuk mobile */}
+        <div className="flex-1 flex flex-col vh-fix overflow-hidden">
+          <header className="flex-none flex items-center justify-between p-2 sm:p-4 border-b">
             <div className="flex items-center">
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="mr-2 sm:mr-4">
@@ -1122,19 +1171,36 @@ export function DashboardComponent() {
             )}
           </header>
 
-          <main className="flex-1 p-2 sm:p-4 overflow-y-auto touch-scroll safe-area-padding">
+          <main 
+            ref={mainContentRef}
+            className="flex-1 p-2 sm:p-4 overflow-y-auto touch-scroll safe-area-padding overscroll-contain"
+          >
             {currentChat ? (
               <div className="max-w-[1200px] mx-auto flex flex-col items-center">
-                <div className="space-y-4 w-full max-w-[100%] sm:max-w-3xl">
-                  {/* Tambahkan indikator chaining di atas area pesan */}
-                  {renderChainIndicator()}
+                <div className="space-y-3 sm:space-y-4 w-full max-w-[100%] sm:max-w-3xl">
+                  {/* Update loading indicator position untuk mobile */}
+                  {isLoading && (
+                    <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50">
+                      <div className="bg-primary/90 text-primary-foreground px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg">
+                        <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                        <span className="ml-1">AI is typing, please wait...</span>
+                      </div>
+                    </div>
+                  )}
                   
-                  {messages[currentChat.id]?.map((message, index) => (
-                    <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`flex items-start gap-2 sm:gap-3 ${
+                  {/* Update message styling untuk mobile */}
+                  {messages[currentChat.id]?.map((message, index, array) => (
+                    <div 
+                      key={index} 
+                      ref={index === array.length - 1 ? lastMessageRef : null}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`flex items-start gap-1.5 sm:gap-3 ${
                         message.role === 'user' 
-                          ? 'flex-row-reverse max-w-[95%] sm:max-w-[80%]'
-                          : 'flex-row w-[calc(100%-40px)] sm:w-[90%]'
+                          ? 'flex-row-reverse max-w-[92%] sm:max-w-[85%]'
+                          : 'flex-row w-[calc(100%-32px)] sm:w-[90%]'
                       }`}>
                         <Avatar className="w-8 h-8 flex-shrink-0">
                           {message.role === 'user' ? (
@@ -1150,7 +1216,7 @@ export function DashboardComponent() {
                           )}
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className={`relative p-2.5 sm:p-3 rounded-lg ${
+                          <div className={`relative p-5.5 sm:p-3 rounded-lg ${
                             message.role === 'user' 
                               ? 'bg-primary/90 text-primary-foreground'
                               : 'bg-muted'
@@ -1159,6 +1225,20 @@ export function DashboardComponent() {
                               remarkPlugins={[remarkGfm]}
                               className="markdown-content text-[13px] sm:text-base leading-relaxed tracking-normal break-words"
                               components={{
+                                // Update heading components to have proper mobile spacing
+                                h1: ({node, ...props}) => <h1 {...props} className="text-lg sm:text-xl font-bold mt-3 mb-2 first:mt-0" />,
+                                h2: ({node, ...props}) => <h2 {...props} className="text-base sm:text-lg font-semibold mt-3 mb-2 first:mt-0" />,
+                                h3: ({node, ...props}) => <h3 {...props} className="text-sm sm:text-base font-semibold mt-3 mb-2 first:mt-0" />,
+                                h4: ({node, ...props}) => <h4 {...props} className="text-sm font-medium mt-3 mb-2 first:mt-0" />,
+                                h5: ({node, ...props}) => <h5 {...props} className="text-xs sm:text-sm font-medium mt-3 mb-2 first:mt-0" />,
+                                h6: ({node, ...props}) => <h6 {...props} className="text-xs font-medium mt-3 mb-2 first:mt-0" />,
+                                // Update paragraph spacing
+                                p: ({node, ...props}) => <p {...props} className="mb-2 last:mb-0" />,
+                                // Update list spacing
+                                ul: ({node, ...props}) => <ul {...props} className="list-disc pl-4 mb-2 last:mb-0" />,
+                                ol: ({node, ...props}) => <ol {...props} className="list-decimal pl-4 mb-2 last:mb-0" />,
+                                li: ({node, ...props}) => <li {...props} className="mb-1 last:mb-0" />,
+                                // Keep existing code block styling
                                 code: ({inline, className, children, ...props}: any) => {
                                   if (inline) {
                                     return (
@@ -1199,10 +1279,12 @@ export function DashboardComponent() {
                                         variant="ghost"
                                         size="icon"
                                         className="absolute top-2 right-2 h-5 w-5 sm:h-6 sm:w-6
-                                          opacity-0 group-hover:opacity-100
+                                          opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+                                          hover:opacity-100
                                           focus:opacity-100
                                           bg-secondary/80 backdrop-blur-sm
-                                          transition-all duration-200"
+                                          transition-all duration-200
+                                          z-10"
                                         onClick={() => copyToClipboard(String(children))}
                                         title="Copy code"
                                       >
@@ -1212,7 +1294,7 @@ export function DashboardComponent() {
                                   )
                                 },
                                 pre: ({node, ...props}) => (
-                                  <pre {...props} className="my-2 sm:my-3 overflow-hidden bg-transparent" />
+                                  <pre {...props} className="my-2 sm:my-3 overflow-hidden bg-transparent first:mt-0 last:mb-0" />
                                 ),
                               }}
                             >
@@ -1230,7 +1312,7 @@ export function DashboardComponent() {
             )}
           </main>
 
-          {/* Footer - Updated to match centered layout */}
+          {/* Update input area untuk mobile */}
           {currentChat && (
             <footer className="flex-none px-2 py-2 sm:p-4 border-t input-area safe-area-padding">
               <div className="flex space-x-2 max-w-3xl mx-auto">
@@ -1248,23 +1330,20 @@ export function DashboardComponent() {
                       handleSendMessage()
                     }
                   }}
-                  className="flex-1 min-h-[40px] sm:min-h-[44px] max-h-[200px] resize-none py-2 text-sm sm:text-base transition-all duration-200 rounded-lg"
+                  className="flex-1 min-h-[36px] sm:min-h-[44px] max-h-[200px] resize-none py-1.5 sm:py-2 text-sm transition-all duration-200 rounded-lg"
                   style={{
                     overflow: 'hidden',
                   }}
                   rows={1}
                 />
-                <div className="flex gap-1 sm:gap-2">
-                  {/* Send button - lebih compact di mobile */}
-                  <Button 
-                    onClick={handleSendMessage} 
-                    className="h-[40px] sm:h-[44px] px-3 sm:px-4"
-                    disabled={isLoading || !inputMessage.trim()}
-                  >
-                    <Send className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Send</span>
-                  </Button>
-                </div>
+                <Button 
+                  onClick={handleSendMessage} 
+                  className="h-[36px] sm:h-[44px] px-3 sm:px-4"
+                  disabled={isLoading || !inputMessage.trim()}
+                >
+                  <Send className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Send</span>
+                </Button>
               </div>
             </footer>
           )}
