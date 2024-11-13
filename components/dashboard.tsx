@@ -1122,7 +1122,10 @@ export function DashboardComponent() {
                           message.role === 'user' ? 'hidden sm:block' : ''
                         }`}>
                           {message.role === 'user' ? (
-                            <AvatarFallback>U</AvatarFallback>
+                            <>
+                              <AvatarImage src="/images/logos/user.png" alt="User" />
+                              <AvatarFallback>U</AvatarFallback>
+                            </>
                           ) : (
                             <>
                               <AvatarImage src="/images/logos/ai.png" alt="AI" />
@@ -1136,12 +1139,16 @@ export function DashboardComponent() {
                               ? 'bg-primary/90 text-primary-foreground prose-sm sm:prose-base max-w-none font-medium'
                               : 'bg-muted prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed'
                           }`}>
-                            {/* Tambahkan tombol copy untuk pesan AI */}
+                            {/* Update tombol copy untuk responsivitas mobile */}
                             {message.role === 'assistant' && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-2 right-2 h-6 w-6 
+                                  sm:opacity-0 sm:group-hover:opacity-100 
+                                  opacity-100 hover:opacity-80
+                                  bg-secondary/80 backdrop-blur-sm sm:bg-transparent
+                                  transition-all duration-200"
                                 onClick={() => copyToClipboard(message.content)}
                                 title="Copy message"
                               >
