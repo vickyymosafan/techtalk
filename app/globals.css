@@ -299,3 +299,76 @@ body {
     height: -webkit-fill-available;
   }
 }
+
+/* iOS-specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  .ios-height {
+    height: -webkit-fill-available !important;
+  }
+  
+  /* Prevent rubber-band scrolling effect */
+  html {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  body {
+    height: 100vh;
+    height: -webkit-fill-available;
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Ensure content fills available space */
+  #root {
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Viewport height adjustments */
+.vh-fix {
+  height: 100vh; /* Fallback */
+  height: 100dvh;
+}
+
+/* Prevent content shift when virtual keyboard appears */
+@media screen and (max-width: 768px) {
+  .mobile-safe-height {
+    max-height: -webkit-fill-available;
+    max-height: 100dvh;
+  }
+  
+  /* Adjust input area when keyboard is visible */
+  .input-area {
+    position: sticky;
+    bottom: 0;
+    background-color: hsl(var(--background));
+    z-index: 10;
+  }
+}
+
+/* Optimize touch interactions */
+@media (hover: none) and (pointer: coarse) {
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  
+  .prevent-overscroll {
+    overscroll-behavior: none;
+  }
+}
+
+/* Ensure content is visible with notches */
+@supports(padding: max(0px)) {
+  .safe-area-padding {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

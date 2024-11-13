@@ -18,6 +18,7 @@
     "@radix-ui/react-scroll-area": "^1.2.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
+    "@tanstack/react-virtual": "^3.10.9",
     "@types/prismjs": "^1.26.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -25,6 +26,7 @@
     "framer-motion": "^11.11.13",
     "groq-sdk": "^0.8.0",
     "js-cookie": "^3.0.5",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.456.0",
     "next": "14.2.16",
     "next-themes": "^0.4.3",
@@ -44,6 +46,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
     "@types/js-cookie": "^3.0.6",
+    "@types/lodash": "^4.17.13",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
