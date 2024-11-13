@@ -318,6 +318,24 @@ const styles = `
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  
+  /* Optional: Custom scrollbar styling for desktop */
+  @media (min-width: 640px) {
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(155, 155, 155, 0.5);
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(155, 155, 155, 0.7);
+    }
+  }
 `;
 
 // Tambahkan fungsi untuk mengkopi teks
@@ -1107,7 +1125,7 @@ export function DashboardComponent() {
           <main className="flex-1 p-2 sm:p-4 overflow-y-auto touch-scroll safe-area-padding">
             {currentChat ? (
               <div className="max-w-[1200px] mx-auto flex flex-col items-center">
-                <div className="space-y-4 w-full max-w-3xl">
+                <div className="space-y-4 w-full max-w-[100%] sm:max-w-3xl">
                   {/* Tambahkan indikator chaining di atas area pesan */}
                   {renderChainIndicator()}
                   
@@ -1115,12 +1133,10 @@ export function DashboardComponent() {
                     <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`flex items-start gap-2 sm:gap-3 ${
                         message.role === 'user' 
-                          ? 'flex-row-reverse max-w-[90%] sm:max-w-[80%]'
-                          : 'flex-row w-full sm:w-[90%]'
+                          ? 'flex-row-reverse max-w-[95%] sm:max-w-[80%]'
+                          : 'flex-row w-[calc(100%-40px)] sm:w-[90%]'
                       }`}>
-                        <Avatar className={`w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 ${
-                          message.role === 'user' ? 'hidden sm:block' : ''
-                        }`}>
+                        <Avatar className="w-8 h-8 flex-shrink-0">
                           {message.role === 'user' ? (
                             <>
                               <AvatarImage src="/images/logos/user.png" alt="User" />
@@ -1133,62 +1149,70 @@ export function DashboardComponent() {
                             </>
                           )}
                         </Avatar>
-                        <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} flex-1 group`}>
-                          <div className={`relative p-2 sm:p-3 rounded-lg break-words ${
+                        <div className="flex-1 min-w-0">
+                          <div className={`relative p-2.5 sm:p-3 rounded-lg ${
                             message.role === 'user' 
-                              ? 'bg-primary/90 text-primary-foreground prose-sm sm:prose-base max-w-none font-medium'
-                              : 'bg-muted prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed'
+                              ? 'bg-primary/90 text-primary-foreground'
+                              : 'bg-muted'
                           }`}>
-                            {/* Update tombol copy untuk responsivitas mobile */}
-                            {message.role === 'assistant' && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-2 right-2 h-6 w-6 
-                                  sm:opacity-0 sm:group-hover:opacity-100 
-                                  opacity-100 hover:opacity-80
-                                  bg-secondary/80 backdrop-blur-sm sm:bg-transparent
-                                  transition-all duration-200"
-                                onClick={() => copyToClipboard(message.content)}
-                                title="Copy message"
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            )}
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm]}
-                              className="markdown-content text-[13px] sm:text-base leading-relaxed tracking-normal"
+                              className="markdown-content text-[13px] sm:text-base leading-relaxed tracking-normal break-words"
                               components={{
-                                p: ({node, ...props}) => (
-                                  <p {...props} className="my-1 sm:my-2 leading-relaxed" />
-                                ),
-                                ul: ({node, ...props}) => (
-                                  <ul {...props} className="my-1 sm:my-2 pl-4 sm:pl-5 space-y-1" />
-                                ),
-                                ol: ({node, ...props}) => (
-                                  <ol {...props} className="my-1 sm:my-2 pl-4 sm:pl-5 space-y-1" />
-                                ),
-                                li: ({node, ...props}) => (
-                                  <li {...props} className="my-0.5 sm:my-1 leading-relaxed" />
-                                ),
-                                code: ({inline, className, ...props}: {inline?: boolean} & React.HTMLProps<HTMLElement>) => (
-                                  inline 
-                                    ? <code {...props} className="px-1 py-0.5 bg-secondary rounded text-[12px] sm:text-sm font-mono" />
-                                    : <code {...props} className="block p-2 sm:p-3 bg-secondary rounded-md text-[12px] sm:text-sm overflow-x-auto font-mono" />
-                                ),
+                                code: ({inline, className, children, ...props}: any) => {
+                                  if (inline) {
+                                    return (
+                                      <code {...props} className="px-1 py-0.5 bg-secondary rounded text-[11px] sm:text-sm font-mono">
+                                        {children}
+                                      </code>
+                                    )
+                                  }
+                                  
+                                  // For code blocks
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const language = match ? match[1] : '';
+                                  
+                                  return (
+                                    <div className="relative group -mx-2.5 sm:mx-0 bg-secondary rounded-lg max-w-[calc(100vw-80px)] sm:max-w-none">
+                                      {language && (
+                                        <div className="absolute top-2 left-2 px-2 py-1 text-[10px] sm:text-xs text-muted-foreground bg-background/50 rounded-md">
+                                          {language}
+                                        </div>
+                                      )}
+                                      
+                                      <div className="overflow-x-auto hide-scrollbar">
+                                        <code {...props} className={`
+                                          block 
+                                          pt-8 pb-2 px-3 
+                                          sm:pt-9 sm:pb-3 sm:px-4
+                                          text-[11px] leading-relaxed 
+                                          sm:text-sm 
+                                          font-mono 
+                                          whitespace-pre
+                                          ${language ? `language-${language}` : ''}
+                                        `}>
+                                          {children}
+                                        </code>
+                                      </div>
+
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-2 right-2 h-5 w-5 sm:h-6 sm:w-6
+                                          opacity-0 group-hover:opacity-100
+                                          focus:opacity-100
+                                          bg-secondary/80 backdrop-blur-sm
+                                          transition-all duration-200"
+                                        onClick={() => copyToClipboard(String(children))}
+                                        title="Copy code"
+                                      >
+                                        <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                      </Button>
+                                    </div>
+                                  )
+                                },
                                 pre: ({node, ...props}) => (
-                                  <pre {...props} className="my-2 sm:my-3 overflow-x-auto" />
-                                ),
-                                table: ({node, ...props}) => (
-                                  <div className="overflow-x-auto my-2 sm:my-3">
-                                    <table {...props} className="min-w-full border-collapse" />
-                                  </div>
-                                ),
-                                th: ({node, ...props}) => (
-                                  <th {...props} className="border px-2 py-1 sm:px-3 sm:py-2 bg-secondary" />
-                                ),
-                                td: ({node, ...props}) => (
-                                  <td {...props} className="border px-2 py-1 sm:px-3 sm:py-2" />
+                                  <pre {...props} className="my-2 sm:my-3 overflow-hidden bg-transparent" />
                                 ),
                               }}
                             >
@@ -1199,23 +1223,6 @@ export function DashboardComponent() {
                       </div>
                     </div>
                   ))}
-                  
-                  {/* Invisible scroll anchor */}
-                  <div ref={messagesEndRef} style={{ height: 0 }} />
-                  
-                  {/* Loading Message - Updated width */}
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="flex items-start gap-3 w-[calc(100%-64px)]">
-                        <Avatar className="flex-shrink-0">
-                          <AvatarFallback>AI</AvatarFallback>
-                        </Avatar>
-                        <div className="p-3 rounded-lg bg-secondary rounded-tl-none">
-                          Thinking...
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ) : (
