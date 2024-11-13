@@ -59,45 +59,50 @@ export function AnimatedLoginComponent() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-black via-gray-800 to-white p-4">
+    <div className="flex items-center justify-center min-h-[100dvh] bg-gradient-to-r from-black via-gray-800 to-white p-4">
       <motion.div
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="w-full max-w-[350px]"
       >
-        <Card className="w-[350px] shadow-2xl">
+        <Card className="shadow-2xl">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-center">Techtalk</CardTitle>
             <CardDescription className="text-center">Login to your account</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className="text-base">Username</Label>
                 <Input
                   id="username"
                   type="text"
                   placeholder="Enter your username"
                   {...register("username")}
-                  className={errors.username && "border-red-500"}
+                  className={`h-11 text-base ${errors.username && "border-red-500"}`}
                 />
                 {errors.username && (
                   <p className="text-red-500 text-sm">{errors.username.message}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-base">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   {...register("password")}
-                  className={errors.password && "border-red-500"}
+                  className={`h-11 text-base ${errors.password && "border-red-500"}`}
                 />
                 {errors.password && (
                   <p className="text-red-500 text-sm">{errors.password.message}</p>
                 )}
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full h-11 text-base font-semibold" 
+                disabled={isLoading}
+              >
                 {isLoading ? "Logging in..." : "Log in"}
               </Button>
             </form>

@@ -55,7 +55,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { streamGroqResponse } from '@/lib/groq'
-import type { Message, StreamHandler, Chat, Group as GroupType } from '@/types/chat'
+import type { Message, StreamHandler, Chat, Group as GroupType, ChainedResponse } from '@/types/chat'
 import { useAuth } from '@/contexts/auth-context'
 
 const MonacoEditor = lazy(() => import('@monaco-editor/react'))
@@ -175,13 +175,6 @@ const executePythonCode = async (code: string) => {
   }
 };
 
-// Tambahkan interface untuk ChainedResponse
-interface ChainedResponse {
-  content: string;
-  hasMore: boolean;
-  nextCursor?: number;
-}
-
 // Tambahkan utility function untuk mendeteksi jumlah yang diminta
 const extractRequestedCount = (message: string): number | null => {
   // Cari pola angka yang diikuti dengan item/data/baris/entries dll
@@ -205,46 +198,127 @@ const extractRequestedCount = (message: string): number | null => {
 // Tambahkan komponen WelcomeGuide
 const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center px-4">
-      <h2 className="text-2xl font-bold mb-6">Welcome to Techtalk! 👋</h2>
-      
-      <div className="space-y-6 w-full">
-        <div className="bg-secondary/30 rounded-lg p-4 text-left">
-          <h3 className="font-semibold flex items-center gap-2 mb-2">
-            <span className="bg-primary/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
-            Create a New Group
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Start by creating a group to organize your conversations. Think of it like a folder for related chats.
-          </p>
-          <Button onClick={onCreateGroup} className="mt-3 w-full">
-            <FolderPlus className="mr-2 h-4 w-4" /> Create New Group
-          </Button>
-        </div>
-
-        <div className="bg-secondary/30 rounded-lg p-4 text-left opacity-70">
-          <h3 className="font-semibold flex items-center gap-2 mb-2">
-            <span className="bg-primary/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-            Start a New Chat
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Once you have a group, you can create a new chat within it. Click the "New Chat" button in your group.
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-4 md:p-6">
+      {/* Container utama dengan max-width yang responsif */}
+      <div className="w-full max-w-[280px] xs:max-w-[350px] sm:max-w-[450px] md:max-w-[500px] mx-auto">
+        {/* Header dengan font yang lebih modern */}
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-xl xs:text-2xl md:text-3xl font-bold mb-2 tracking-tight">
+            Selamat Datang di Techtalk! 👋
+          </h2>
+          <p className="text-sm xs:text-base text-muted-foreground leading-relaxed">
+            Mari mulai percakapan pertama Anda
           </p>
         </div>
+        
+        <div className="space-y-4 sm:space-y-6">
+          {/* Langkah 1 dengan font yang lebih readable */}
+          <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 text-left relative">
+            {/* Indikator aktif */}
+            <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary rounded-full" />
+            
+            <h3 className="font-semibold flex items-center gap-2 mb-2 sm:mb-3">
+              <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium">1</span>
+              <span className="text-sm sm:text-base tracking-tight">Buat Folder Baru</span>
+            </h3>
+            
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+              Pertama, buat Folder untuk mengatur percakapan Anda. Anggap saja seperti folder untuk menyimpan obrolan yang saling berhubungan.
+            </p>
+            
+            {/* Contoh Folder - Scrollable pada mobile */}
+            <div className="overflow-x-auto pb-2 mb-3 hide-scrollbar">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground min-w-max">
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <FolderPlus className="h-3 w-3 sm:h-4 sm:w-4" />
+                  Contoh Folder:
+                </span>
+                <span className="bg-secondary/50 px-2 py-1 rounded whitespace-nowrap">Proyek Kerja</span>
+                <span className="bg-secondary/50 px-2 py-1 rounded whitespace-nowrap">Catatan Pribadi</span>
+                <span className="bg-secondary/50 px-2 py-1 rounded whitespace-nowrap">Belajar</span>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={onCreateGroup} 
+              className="w-full bg-primary hover:bg-primary/90 h-9 sm:h-10 text-xs sm:text-sm"
+            >
+              <FolderPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+              Klik Disini
+            </Button>
+          </div>
 
-        <div className="bg-secondary/30 rounded-lg p-4 text-left opacity-70">
-          <h3 className="font-semibold flex items-center gap-2 mb-2">
-            <span className="bg-primary/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-            Start Chatting
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Begin your conversation! Type your message and press Enter or click the Send button to start chatting with our AI assistant.
-          </p>
+          {/* Langkah 2 dengan font yang lebih konsisten */}
+          <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 text-left opacity-70">
+            <h3 className="font-semibold flex items-center gap-2 mb-2 sm:mb-3">
+              <span className="bg-primary/20 rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium">2</span>
+              <span className="text-sm sm:text-base tracking-tight">Mulai Obrolan Baru</span>
+            </h3>
+            
+            <div className="space-y-2 sm:space-y-3">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Setelah membuat Folder, Anda akan melihat tombol "Obrolan Baru". Klik untuk memulai percakapan.
+              </p>
+              <div className="bg-secondary/20 rounded-lg p-2 sm:p-3">
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
+                  <FilePlus className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                  <span>Cari tombol ini di dalam Folder Anda</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Langkah 3: Mulai Mengobrol */}
+          <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 text-left opacity-70">
+            <h3 className="font-semibold flex items-center gap-2 mb-2 sm:mb-3">
+              <span className="bg-primary/20 rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium">3</span>
+              <span className="text-sm sm:text-base tracking-tight">Mulai Mengobrol</span>
+            </h3>
+            
+            <div className="space-y-2 sm:space-y-3">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Sekarang Anda bisa mulai mengobrol! Berikut beberapa contoh pertanyaan yang bisa Anda ajukan:
+              </p>
+              <div className="space-y-2">
+                <div className="bg-secondary/20 rounded-lg p-2 text-xs sm:text-sm">
+                  "Tolong jelaskan cara kerja React hooks"
+                </div>
+                <div className="bg-secondary/20 rounded-lg p-2 text-xs sm:text-sm">
+                  "Buatkan fungsi Python untuk mengurutkan daftar"
+                </div>
+                <div className="bg-secondary/20 rounded-lg p-2 text-xs sm:text-sm">
+                  "Jelaskan bagaimana database bekerja"
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tips Cepat */}
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-primary font-medium mb-2">
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+              Tips Cepat
+            </div>
+            <p className="text-muted-foreground">
+              Tekan Enter untuk mengirim pesan dan Shift + Enter untuk baris baru. Gunakan menu samping (≡) untuk mengelola Folder dan obrolan Anda.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
+// Tambahkan CSS untuk menyembunyikan scrollbar pada overflow-x
+const styles = `
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
 
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -297,7 +371,7 @@ export function DashboardComponent() {
   const createNewGroup = useCallback(() => {
     const newGroup: GroupType = {
       id: `group-${Date.now()}`,
-      name: `New Group ${groups.length + 1}`,
+      name: `Folder ${groups.length + 1}`,
       chats: [],
       createdAt: new Date()
     }
@@ -306,7 +380,7 @@ export function DashboardComponent() {
     setNewItems(prev => ({ ...prev, [newGroup.id]: true }))
     setIsSidebarOpen(true)
 
-    // Tambahkan panduan untuk grup pertama
+    // Tambahkan panduan untuk Folder pertama
     if (groups.length === 0) {
       setMessages(prev => ({
         ...prev,
@@ -384,11 +458,47 @@ export function DashboardComponent() {
   }, [groups]);
 
   const deleteGroup = useCallback((groupId: string) => {
+    const group = groups.find(g => g.id === groupId)
+    
+    // Clear all chats in the group
+    group?.chats.forEach(chat => {
+      // Clear messages
+      setMessages(prev => {
+        const updated = { ...prev }
+        delete updated[chat.id]
+        return updated
+      })
+      
+      // Clear chained responses
+      setChainedResponses(prev => {
+        const updated = { ...prev }
+        delete updated[chat.id]
+        return updated
+      })
+      
+      // Clear from localStorage
+      localStorage.removeItem(`chat-${chat.id}`)
+      localStorage.removeItem(`responses-${chat.id}`)
+    })
+    
+    // Remove group
     setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId))
     setExpandedGroups(prevExpanded => prevExpanded.filter(id => id !== groupId))
-    if (currentChat && groups.find(g => g.id === groupId)?.chats.some(c => c.id === currentChat.id)) {
+    
+    // Reset current chat if it belongs to the deleted group
+    if (currentChat && group?.chats.some(c => c.id === currentChat.id)) {
       setCurrentChat(null)
+      setCurrentCount(0)
+      setRequestedCount(null)
+      setIsChaining(false)
+      setCurrentChainCursor(0)
+      setCodeContent('')
+      setEditedCode('')
+      setIsEditing(false)
     }
+    
+    // Clear group from localStorage
+    localStorage.removeItem(`group-${groupId}`)
   }, [groups, currentChat])
 
   // Update renameChat function to handle inline renaming
@@ -400,6 +510,7 @@ export function DashboardComponent() {
   }, [groups]);
 
   const deleteChat = useCallback((groupId: string, chatId: string) => {
+    // Remove chat from groups
     setGroups(prevGroups =>
       prevGroups.map(group =>
         group.id === groupId
@@ -407,9 +518,35 @@ export function DashboardComponent() {
           : group
       )
     )
+    
+    // Clear all associated data
+    setMessages(prev => {
+      const updated = { ...prev }
+      delete updated[chatId]
+      return updated
+    })
+    
+    setChainedResponses(prev => {
+      const updated = { ...prev }
+      delete updated[chatId]
+      return updated
+    })
+    
+    // Reset current chat if it's the one being deleted
     if (currentChat && currentChat.id === chatId) {
       setCurrentChat(null)
+      setCurrentCount(0)
+      setRequestedCount(null)
+      setIsChaining(false)
+      setCurrentChainCursor(0)
+      setCodeContent('')
+      setEditedCode('')
+      setIsEditing(false)
     }
+    
+    // Clear from localStorage
+    localStorage.removeItem(`chat-${chatId}`)
+    localStorage.removeItem(`responses-${chatId}`)
   }, [currentChat])
 
   // Tambahkan state untuk prompt chaining
@@ -424,7 +561,6 @@ export function DashboardComponent() {
   // Update handleSendMessage untuk mendukung prompt chaining
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() && currentChat) {
-      // Deteksi jumlah item yang diminta
       const count = extractRequestedCount(inputMessage)
       setRequestedCount(count)
       setCurrentCount(0)
@@ -458,155 +594,55 @@ export function DashboardComponent() {
         ]
       }))
 
-      if (count) {
-        // Jika user meminta jumlah spesifik, gunakan prompt chaining
-        const startChainedResponse = async () => {
-          setIsChaining(true)
-          setCurrentChainCursor(0)
-          
-          const chainResponse = async (cursor: number = 0) => {
-            const remainingCount = count - currentCount
-            const batchSize = 200
-            const currentBatchSize = Math.min(batchSize, remainingCount)
-            
-            const chainPrompt = cursor === 0 
-              ? `${inputMessage}. Berikan tepat ${count} item.`
-              : `Lanjutkan jawaban sebelumnya dari cursor ${cursor}. Sisa item yang diperlukan: ${remainingCount}. Konteks sebelumnya: ${messages[currentChat.id]?.slice(-1)[0]?.content}`
+      // Sederhanakan prompt untuk menghasilkan data sesuai jumlah yang diminta
+      const systemPrompt = count 
+        ? `Berikan tepat ${count} item. Format setiap item dengan nomor urut dimulai dari 1.`
+        : '';
 
-            await streamGroqResponse(
-              [
+      streamGroqResponse(
+        [
+          ...updatedMessages,
+          ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : [])
+        ],
+        {
+          onToken: (token) => {
+            setMessages(prev => ({
+              ...prev,
+              [currentChat.id]: [
                 ...updatedMessages,
-                { 
-                  role: 'system', 
-                  content: `
-                    Berikan jawaban parsial dari cursor ${cursor}.
-                    Total item yang diminta: ${count}
-                    Batch size: ${currentBatchSize}
-                    Current count: ${currentCount}
-                    Remaining: ${remainingCount}
-                    Format setiap item dengan nomor urut dimulai dari ${currentCount + 1}.
-                    Tambahkan [[CONTINUE]] di akhir jika masih ada item yang tersisa.
-                  `
+                {
+                  role: 'assistant',
+                  content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
                 }
-              ],
-              {
-                onToken: (token) => {
-                  setMessages(prev => ({
-                    ...prev,
-                    [currentChat.id]: [
-                      ...updatedMessages,
-                      {
-                        role: 'assistant',
-                        content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
-                      }
-                    ]
-                  }))
-                  scrollToBottom(true)
-                },
-                onComplete: () => {
-                  const response = messages[currentChat.id]?.slice(-1)[0]?.content || ''
-                  const itemCount = (response.match(/^\d+\./gm) || []).length
-                  const newCurrentCount = currentCount + itemCount
-                  setCurrentCount(newCurrentCount)
-                  
-                  const hasMore = newCurrentCount < count
-                  
-                  if (hasMore) {
-                    setChainedResponses(prev => ({
-                      ...prev,
-                      [currentChat.id]: [
-                        ...(prev[currentChat.id] || []),
-                        { 
-                          content: response, 
-                          hasMore: true, 
-                          nextCursor: cursor + itemCount,
-                          currentCount: newCurrentCount
-                        }
-                      ]
-                    }))
-                    setCurrentChainCursor(cursor + itemCount)
-                    chainResponse(cursor + itemCount)
-                  } else {
-                    setIsChaining(false)
-                    setIsLoading(false)
-                    setChainedResponses(prev => ({
-                      ...prev,
-                      [currentChat.id]: [
-                        ...(prev[currentChat.id] || []),
-                        { 
-                          content: response, 
-                          hasMore: false,
-                          currentCount: newCurrentCount
-                        }
-                      ]
-                    }))
-                  }
-                },
-                onError: (error) => {
-                  console.error('Groq API Error:', error)
-                  setIsLoading(false)
-                  setIsChaining(false)
-                  setMessages(prev => ({
-                    ...prev,
-                    [currentChat.id]: [
-                      ...updatedMessages,
-                      {
-                        role: 'assistant',
-                        content: '❌ Sorry, there was an error generating the response. Please try again.'
-                      }
-                    ]
-                  }))
-                  scrollToBottom(true)
+              ]
+            }))
+            scrollToBottom(true)
+          },
+          onComplete: () => {
+            setIsLoading(false)
+            const response = messages[currentChat.id]?.slice(-1)[0]?.content || ''
+            const itemCount = (response.match(/^\d+\./gm) || []).length
+            setCurrentCount(itemCount)
+          },
+          onError: (error) => {
+            console.error('Groq API Error:', error)
+            setIsLoading(false)
+            setMessages(prev => ({
+              ...prev,
+              [currentChat.id]: [
+                ...updatedMessages,
+                {
+                  role: 'assistant',
+                  content: '❌ Sorry, there was an error generating the response. Please try again.'
                 }
-              }
-            )
+              ]
+            }))
+            scrollToBottom(true)
           }
-
-          await chainResponse()
         }
-
-        startChainedResponse()
-      } else {
-        // Jika user tidak meminta jumlah spesifik, berikan respons normal tanpa chaining
-        streamGroqResponse(
-          updatedMessages,
-          {
-            onToken: (token) => {
-              setMessages(prev => ({
-                ...prev,
-                [currentChat.id]: [
-                  ...updatedMessages,
-                  {
-                    role: 'assistant',
-                    content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
-                  }
-                ]
-              }))
-              scrollToBottom(true)
-            },
-            onComplete: () => {
-              setIsLoading(false)
-            },
-            onError: (error) => {
-              console.error('Groq API Error:', error)
-              setIsLoading(false)
-              setMessages(prev => ({
-                ...prev,
-                [currentChat.id]: [
-                  ...updatedMessages,
-                  {
-                    role: 'assistant',
-                    content: '❌ Sorry, there was an error generating the response. Please try again.'
-                  }
-                ]
-              }))
-              scrollToBottom(true)
-            }
-          }
-        )
-      }
+      )
     }
-  }, [inputMessage, currentChat, messages, scrollToBottom, currentCount])
+  }, [inputMessage, currentChat, messages, scrollToBottom])
 
   // Update progress indicator
   const renderChainIndicator = () => {
@@ -645,23 +681,34 @@ export function DashboardComponent() {
   }, [editedCode])
 
   const deleteAllGroups = useCallback(() => {
-    // Clear all related states
+    // Clear all data for all groups and chats
+    groups.forEach(group => {
+      group.chats.forEach(chat => {
+        // Clear from localStorage
+        localStorage.removeItem(`chat-${chat.id}`)
+        localStorage.removeItem(`responses-${chat.id}`)
+      })
+      localStorage.removeItem(`group-${group.id}`)
+    })
+    
+    // Reset all states
     setGroups([])
     setExpandedGroups([])
     setCurrentChat(null)
     setMessages({})
-    // Add these lines to clear rename-related states
-    setRenamingGroupId(null)
-    setRenamingChatId(null)
-    setNewName('')
-    // Clear new items indicators
-    setNewItems({})
-    // Clear chaining-related states
     setChainedResponses({})
+    setCurrentCount(0)
+    setRequestedCount(null)
     setIsChaining(false)
     setCurrentChainCursor(0)
-    setRequestedCount(null)
-    setCurrentCount(0)
+    setCodeContent('')
+    setEditedCode('')
+    setIsEditing(false)
+    
+    // Clear any other related localStorage items
+    localStorage.removeItem('groups')
+    localStorage.removeItem('expanded-groups')
+    localStorage.removeItem('current-chat')
   }, [])
 
   const deleteAllChatsInGroup = useCallback((groupId: string) => {
@@ -680,10 +727,32 @@ export function DashboardComponent() {
 
   const clearChat = useCallback(() => {
     if (currentChat) {
-      setMessages(prev => ({
-        ...prev,
-        [currentChat.id]: []
-      }))
+      // Clear messages for current chat
+      setMessages(prev => {
+        const updated = { ...prev }
+        delete updated[currentChat.id]
+        return updated
+      })
+      
+      // Clear any chained responses
+      setChainedResponses(prev => {
+        const updated = { ...prev }
+        delete updated[currentChat.id]
+        return updated
+      })
+      
+      // Reset states related to current chat
+      setCurrentCount(0)
+      setRequestedCount(null)
+      setIsChaining(false)
+      setCurrentChainCursor(0)
+      setCodeContent('')
+      setEditedCode('')
+      setIsEditing(false)
+      
+      // Clear from localStorage
+      localStorage.removeItem(`chat-${currentChat.id}`)
+      localStorage.removeItem(`responses-${currentChat.id}`)
     }
   }, [currentChat])
 
@@ -769,7 +838,7 @@ export function DashboardComponent() {
             <div className="p-4 space-y-2">
               <div className="flex gap-2">
                 <Button className="flex-1 justify-start" onClick={createNewGroup}>
-                  <FolderPlus className="mr-2 h-4 w-4" /> New Group
+                  <FolderPlus className="mr-2 h-4 w-4" /> Membuat Folder Baru
                 </Button>
                 {groups.length > 0 && (
                   <Button 
@@ -976,8 +1045,8 @@ export function DashboardComponent() {
                               <div className="flex items-center gap-2">
                                 <FilePlus className="h-5 w-5 text-primary" /> 
                                 <div className="flex flex-col items-start">
-                                  <span className="font-medium text-primary">Start New Conversation</span>
-                                  <span className="text-xs text-muted-foreground">Create a new chat in this group</span>
+                                  <span className="font-medium text-primary">Obrolan Baru</span>
+                                  <span className="text-xs text-muted-foreground">Buat obrolan baru dalam Folder ini</span>
                                 </div>
                               </div>
                             </Button>
@@ -1006,66 +1075,22 @@ export function DashboardComponent() {
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <h1 className="text-lg sm:text-xl font-bold truncate">
-                {currentChat?.name || 'Welcome to Techtalk'}
+              <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight">
+                {currentChat?.name || 'Selamat Datang di Techtalk! 👋'}
               </h1>
             </div>
             
-            {/* Add Clear Chat Button */}
+            {/* Tampilkan Trash button untuk mobile dan desktop */}
             {currentChat && (
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={clearChat}
                 title="Clear Chat"
+                className="md:flex" // Ubah dari hidden menjadi flex agar tampil di mobile
               >
                 <Trash className="h-4 w-4 text-red-600" />
               </Button>
-            )}
-
-            {/* Mobile menu button */}
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-
-            {/* Mobile menu dropdown */}
-            {isMobileMenuOpen && (
-              <div className="absolute top-14 right-2 z-50 w-48 bg-background border rounded-md shadow-lg md:hidden">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full justify-start px-4 py-2"
-                  onClick={toggleTheme}
-                >
-                  {theme === 'dark' ? (
-                    <><Sun className="h-4 w-4 mr-2" /> Light Mode</>
-                  ) : (
-                    <><Moon className="h-4 w-4 mr-2" /> Dark Mode</>
-                  )}
-                </Button>
-                {codeContent && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full justify-start px-4 py-2"
-                    onClick={() => window.open('/code-preview', '_blank')}
-                  >
-                    <Code2 className="h-4 w-4 mr-2" /> View Code
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full justify-start px-4 py-2 text-red-600"
-                >
-                  <LogOut className="h-4 w-4 mr-2" /> Logout
-                </Button>
-              </div>
             )}
           </header>
 
@@ -1080,28 +1105,61 @@ export function DashboardComponent() {
                     <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`flex items-start gap-2 sm:gap-3 ${
                         message.role === 'user' 
-                          ? 'flex-row-reverse max-w-[85%] sm:max-w-[75%]' 
-                          : 'flex-row w-[calc(100%-32px)] sm:w-[calc(100%-48px)]'
+                          ? 'flex-row-reverse max-w-[90%] sm:max-w-[80%]'
+                          : 'flex-row w-full sm:w-[90%]'
                       }`}>
                         <Avatar className={`w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 ${
                           message.role === 'user' ? 'hidden sm:block' : ''
                         }`}>
-                          <AvatarFallback>{message.role === 'user' ? 'U' : 'AI'}</AvatarFallback>
+                          {message.role === 'user' ? (
+                            <AvatarFallback>U</AvatarFallback>
+                          ) : (
+                            <>
+                              <AvatarImage src="/images/logos/ai.png" alt="AI" />
+                              <AvatarFallback>AI</AvatarFallback>
+                            </>
+                          )}
                         </Avatar>
                         <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} flex-1`}>
-                          <div className={`p-2 sm:p-3 rounded-lg break-words text-sm ${
+                          <div className={`p-2 sm:p-3 rounded-lg break-words ${
                             message.role === 'user' 
-                              ? 'text-black dark:text-white prose prose-sm sm:prose-base max-w-none sm:max-w-[65ch]' 
-                              : 'bg-transparent rounded-tl-none prose prose-sm sm:prose-base dark:prose-invert max-w-none sm:max-w-[65ch]'
+                              ? 'bg-primary text-primary-foreground prose-sm sm:prose-base max-w-none font-medium'
+                              : 'bg-muted prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed'
                           }`}>
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm]}
-                              className="markdown-content text-[13px] sm:text-base leading-relaxed"
+                              className="markdown-content text-[13px] sm:text-base leading-relaxed tracking-normal"
                               components={{
-                                table: ({ node, ...props }) => (
-                                  <div className="overflow-x-auto my-4">
-                                    <table {...props} />
+                                p: ({node, ...props}) => (
+                                  <p {...props} className="my-1 sm:my-2 leading-relaxed" />
+                                ),
+                                ul: ({node, ...props}) => (
+                                  <ul {...props} className="my-1 sm:my-2 pl-4 sm:pl-5 space-y-1" />
+                                ),
+                                ol: ({node, ...props}) => (
+                                  <ol {...props} className="my-1 sm:my-2 pl-4 sm:pl-5 space-y-1" />
+                                ),
+                                li: ({node, ...props}) => (
+                                  <li {...props} className="my-0.5 sm:my-1 leading-relaxed" />
+                                ),
+                                code: ({inline, className, ...props}: {inline?: boolean} & React.HTMLProps<HTMLElement>) => (
+                                  inline 
+                                    ? <code {...props} className="px-1 py-0.5 bg-secondary rounded text-[12px] sm:text-sm font-mono" />
+                                    : <code {...props} className="block p-2 sm:p-3 bg-secondary rounded-md text-[12px] sm:text-sm overflow-x-auto font-mono" />
+                                ),
+                                pre: ({node, ...props}) => (
+                                  <pre {...props} className="my-2 sm:my-3 overflow-x-auto" />
+                                ),
+                                table: ({node, ...props}) => (
+                                  <div className="overflow-x-auto my-2 sm:my-3">
+                                    <table {...props} className="min-w-full border-collapse" />
                                   </div>
+                                ),
+                                th: ({node, ...props}) => (
+                                  <th {...props} className="border px-2 py-1 sm:px-3 sm:py-2 bg-secondary" />
+                                ),
+                                td: ({node, ...props}) => (
+                                  <td {...props} className="border px-2 py-1 sm:px-3 sm:py-2" />
                                 ),
                               }}
                             >

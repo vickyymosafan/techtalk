@@ -27,4 +27,10 @@ export interface Group {
   name: string;
   chats: Chat[];
   createdAt: Date;
+}
+
+export interface ChainedResponse {
+  id: string;
+  content: string;
+  timestamp: Date;
 } 
