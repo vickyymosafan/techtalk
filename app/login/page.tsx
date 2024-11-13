@@ -1,4 +1,4 @@
-import { AnimatedLoginComponent } from '@/components/animated-login'
+import { AnimatedLoginComponent } from "@/components/animated-login"
 
 export default function LoginPage() {
   return <AnimatedLoginComponent />

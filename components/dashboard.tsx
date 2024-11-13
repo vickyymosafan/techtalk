@@ -175,6 +175,77 @@ const executePythonCode = async (code: string) => {
   }
 };
 
+// Tambahkan interface untuk ChainedResponse
+interface ChainedResponse {
+  content: string;
+  hasMore: boolean;
+  nextCursor?: number;
+}
+
+// Tambahkan utility function untuk mendeteksi jumlah yang diminta
+const extractRequestedCount = (message: string): number | null => {
+  // Cari pola angka yang diikuti dengan item/data/baris/entries dll
+  const patterns = [
+    /(\d+)\s*(items?|data|rows?|entries|examples?|samples?)/i,
+    /generate\s*(\d+)/i,
+    /create\s*(\d+)/i,
+    /list\s*(\d+)/i,
+    /show\s*(\d+)/i,
+  ]
+  
+  for (const pattern of patterns) {
+    const match = message.match(pattern)
+    if (match && match[1]) {
+      return parseInt(match[1])
+    }
+  }
+  return null
+}
+
+// Tambahkan komponen WelcomeGuide
+const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
+  return (
+    <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center px-4">
+      <h2 className="text-2xl font-bold mb-6">Welcome to Techtalk! 👋</h2>
+      
+      <div className="space-y-6 w-full">
+        <div className="bg-secondary/30 rounded-lg p-4 text-left">
+          <h3 className="font-semibold flex items-center gap-2 mb-2">
+            <span className="bg-primary/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+            Create a New Group
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Start by creating a group to organize your conversations. Think of it like a folder for related chats.
+          </p>
+          <Button onClick={onCreateGroup} className="mt-3 w-full">
+            <FolderPlus className="mr-2 h-4 w-4" /> Create New Group
+          </Button>
+        </div>
+
+        <div className="bg-secondary/30 rounded-lg p-4 text-left opacity-70">
+          <h3 className="font-semibold flex items-center gap-2 mb-2">
+            <span className="bg-primary/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+            Start a New Chat
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Once you have a group, you can create a new chat within it. Click the "New Chat" button in your group.
+          </p>
+        </div>
+
+        <div className="bg-secondary/30 rounded-lg p-4 text-left opacity-70">
+          <h3 className="font-semibold flex items-center gap-2 mb-2">
+            <span className="bg-primary/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+            Start Chatting
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Begin your conversation! Type your message and press Enter or click the Send button to start chatting with our AI assistant.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [groups, setGroups] = useState<GroupType[]>([])
@@ -234,6 +305,18 @@ export function DashboardComponent() {
     setExpandedGroups(prevExpanded => [...prevExpanded, newGroup.id])
     setNewItems(prev => ({ ...prev, [newGroup.id]: true }))
     setIsSidebarOpen(true)
+
+    // Tambahkan panduan untuk grup pertama
+    if (groups.length === 0) {
+      setMessages(prev => ({
+        ...prev,
+        [newGroup.id]: [{
+          role: 'assistant',
+          content: `# Welcome to your first group! 🎉\n\nNow that you've created a group, you can:\n\n1. Click the "New Chat" button below to start a conversation\n2. Use the menu (⋮) to rename or manage your group\n3. Create more groups to organize different topics`
+        }]
+      }))
+    }
+
     setTimeout(() => {
       setNewItems(prev => {
         const updated = { ...prev }
@@ -329,8 +412,23 @@ export function DashboardComponent() {
     }
   }, [currentChat])
 
+  // Tambahkan state untuk prompt chaining
+  const [chainedResponses, setChainedResponses] = useState<{ [chatId: string]: ChainedResponse[] }>({})
+  const [isChaining, setIsChaining] = useState(false)
+  const [currentChainCursor, setCurrentChainCursor] = useState<number>(0)
+
+  // Tambahkan state untuk melacak jumlah item yang diminta
+  const [requestedCount, setRequestedCount] = useState<number | null>(null)
+  const [currentCount, setCurrentCount] = useState<number>(0)
+
+  // Update handleSendMessage untuk mendukung prompt chaining
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() && currentChat) {
+      // Deteksi jumlah item yang diminta
+      const count = extractRequestedCount(inputMessage)
+      setRequestedCount(count)
+      setCurrentCount(0)
+
       const updatedMessages: Message[] = [
         ...(messages[currentChat.id] || []),
         { role: 'user' as const, content: inputMessage }
@@ -349,7 +447,6 @@ export function DashboardComponent() {
         textarea.style.height = '2.5rem'
       }
       
-      // Immediate scroll after user message
       scrollToBottom(false)
       
       // Start AI response with empty content
@@ -361,63 +458,178 @@ export function DashboardComponent() {
         ]
       }))
 
-      // Stream AI response
-      streamGroqResponse(
-        updatedMessages,
-        {
-          onToken: (token) => {
-            setMessages(prev => ({
-              ...prev,
-              [currentChat.id]: [
-                ...updatedMessages,
-                {
-                  role: 'assistant',
-                  content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
-                }
-              ]
-            }))
+      if (count) {
+        // Jika user meminta jumlah spesifik, gunakan prompt chaining
+        const startChainedResponse = async () => {
+          setIsChaining(true)
+          setCurrentChainCursor(0)
+          
+          const chainResponse = async (cursor: number = 0) => {
+            const remainingCount = count - currentCount
+            const batchSize = 200
+            const currentBatchSize = Math.min(batchSize, remainingCount)
             
-            // Always scroll to bottom during streaming
-            scrollToBottom(true)
-          },
-          onComplete: () => {
-            setIsLoading(false)
-            // Final scroll to bottom after completion
-            scrollToBottom(true)
-            
-            // Extract code block from markdown response
-            const response = messages[currentChat.id]?.slice(-1)[0]?.content || ''
-            const codeMatch = response.match(/```(\w+)?\n([\s\S]*?)```/)
-            if (codeMatch) {
-              const detectedLanguage = codeMatch[1] || 'plaintext'
-              const codeContent = codeMatch[2].trim()
-              setCodeContent(codeContent)
-              const language = detectedLanguage !== 'plaintext' 
-                ? detectedLanguage 
-                : getLanguageFromCode(codeContent)
-              setCurrentLanguage(language)
-            }
-          },
-          onError: (error) => {
-            console.error('Groq API Error:', error)
-            setIsLoading(false)
-            setMessages(prev => ({
-              ...prev,
-              [currentChat.id]: [
+            const chainPrompt = cursor === 0 
+              ? `${inputMessage}. Berikan tepat ${count} item.`
+              : `Lanjutkan jawaban sebelumnya dari cursor ${cursor}. Sisa item yang diperlukan: ${remainingCount}. Konteks sebelumnya: ${messages[currentChat.id]?.slice(-1)[0]?.content}`
+
+            await streamGroqResponse(
+              [
                 ...updatedMessages,
-                {
-                  role: 'assistant',
-                  content: '❌ Sorry, there was an error generating the response. Please try again.'
+                { 
+                  role: 'system', 
+                  content: `
+                    Berikan jawaban parsial dari cursor ${cursor}.
+                    Total item yang diminta: ${count}
+                    Batch size: ${currentBatchSize}
+                    Current count: ${currentCount}
+                    Remaining: ${remainingCount}
+                    Format setiap item dengan nomor urut dimulai dari ${currentCount + 1}.
+                    Tambahkan [[CONTINUE]] di akhir jika masih ada item yang tersisa.
+                  `
                 }
-              ]
-            }))
-            // Scroll to bottom on error message
-            scrollToBottom(true)
+              ],
+              {
+                onToken: (token) => {
+                  setMessages(prev => ({
+                    ...prev,
+                    [currentChat.id]: [
+                      ...updatedMessages,
+                      {
+                        role: 'assistant',
+                        content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
+                      }
+                    ]
+                  }))
+                  scrollToBottom(true)
+                },
+                onComplete: () => {
+                  const response = messages[currentChat.id]?.slice(-1)[0]?.content || ''
+                  const itemCount = (response.match(/^\d+\./gm) || []).length
+                  const newCurrentCount = currentCount + itemCount
+                  setCurrentCount(newCurrentCount)
+                  
+                  const hasMore = newCurrentCount < count
+                  
+                  if (hasMore) {
+                    setChainedResponses(prev => ({
+                      ...prev,
+                      [currentChat.id]: [
+                        ...(prev[currentChat.id] || []),
+                        { 
+                          content: response, 
+                          hasMore: true, 
+                          nextCursor: cursor + itemCount,
+                          currentCount: newCurrentCount
+                        }
+                      ]
+                    }))
+                    setCurrentChainCursor(cursor + itemCount)
+                    chainResponse(cursor + itemCount)
+                  } else {
+                    setIsChaining(false)
+                    setIsLoading(false)
+                    setChainedResponses(prev => ({
+                      ...prev,
+                      [currentChat.id]: [
+                        ...(prev[currentChat.id] || []),
+                        { 
+                          content: response, 
+                          hasMore: false,
+                          currentCount: newCurrentCount
+                        }
+                      ]
+                    }))
+                  }
+                },
+                onError: (error) => {
+                  console.error('Groq API Error:', error)
+                  setIsLoading(false)
+                  setIsChaining(false)
+                  setMessages(prev => ({
+                    ...prev,
+                    [currentChat.id]: [
+                      ...updatedMessages,
+                      {
+                        role: 'assistant',
+                        content: '❌ Sorry, there was an error generating the response. Please try again.'
+                      }
+                    ]
+                  }))
+                  scrollToBottom(true)
+                }
+              }
+            )
           }
+
+          await chainResponse()
         }
+
+        startChainedResponse()
+      } else {
+        // Jika user tidak meminta jumlah spesifik, berikan respons normal tanpa chaining
+        streamGroqResponse(
+          updatedMessages,
+          {
+            onToken: (token) => {
+              setMessages(prev => ({
+                ...prev,
+                [currentChat.id]: [
+                  ...updatedMessages,
+                  {
+                    role: 'assistant',
+                    content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
+                  }
+                ]
+              }))
+              scrollToBottom(true)
+            },
+            onComplete: () => {
+              setIsLoading(false)
+            },
+            onError: (error) => {
+              console.error('Groq API Error:', error)
+              setIsLoading(false)
+              setMessages(prev => ({
+                ...prev,
+                [currentChat.id]: [
+                  ...updatedMessages,
+                  {
+                    role: 'assistant',
+                    content: '❌ Sorry, there was an error generating the response. Please try again.'
+                  }
+                ]
+              }))
+              scrollToBottom(true)
+            }
+          }
+        )
+      }
+    }
+  }, [inputMessage, currentChat, messages, scrollToBottom, currentCount])
+
+  // Update progress indicator
+  const renderChainIndicator = () => {
+    if (isChaining && requestedCount) {
+      const progress = (currentCount / requestedCount) * 100
+      return (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex-1">
+            <div className="text-xs mb-1">
+              Generating {currentCount} of {requestedCount} items ({progress.toFixed(1)}%)
+            </div>
+            <div className="w-full bg-secondary h-1 rounded-full">
+              <div 
+                className="bg-primary h-1 rounded-full transition-all duration-300" 
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        </div>
       )
     }
-  }, [inputMessage, currentChat, messages, scrollToBottom])
+    return null
+  }
 
   const toggleTheme = useCallback(() => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -849,25 +1061,37 @@ export function DashboardComponent() {
             {currentChat ? (
               <div className="max-w-[1200px] mx-auto flex flex-col items-center">
                 <div className="space-y-4 w-full max-w-3xl">
+                  {/* Tambahkan indikator chaining di atas area pesan */}
+                  {renderChainIndicator()}
+                  
                   {messages[currentChat.id]?.map((message, index) => (
                     <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`flex items-start gap-2 sm:gap-3 ${
                         message.role === 'user' 
-                          ? 'flex-row-reverse max-w-[85%] sm:max-w-[70%]' 
-                          : 'flex-row w-[calc(100%-48px)] sm:w-[calc(100%-64px)]'
+                          ? 'flex-row-reverse max-w-[85%] sm:max-w-[75%]' 
+                          : 'flex-row w-[calc(100%-32px)] sm:w-[calc(100%-48px)]'
                       }`}>
-                        <Avatar className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                        <Avatar className={`w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 ${
+                          message.role === 'user' ? 'hidden sm:block' : ''
+                        }`}>
                           <AvatarFallback>{message.role === 'user' ? 'U' : 'AI'}</AvatarFallback>
                         </Avatar>
                         <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} flex-1`}>
-                          <div className={`p-3 sm:p-4 rounded-lg break-words text-sm sm:text-base ${
+                          <div className={`p-2 sm:p-3 rounded-lg break-words text-sm ${
                             message.role === 'user' 
-                              ? 'text-black dark:text-white prose prose-sm sm:prose-base max-w-[65ch] prose-p:text-black dark:prose-p:text-white prose-headings:text-black dark:prose-headings:text-white prose-strong:text-black dark:prose-strong:text-white prose-code:text-black dark:prose-code:text-white' 
-                              : 'bg-transparent rounded-tl-none prose prose-sm sm:prose-base dark:prose-invert max-w-[65ch] [&_.markdown-content]:space-y-4'
+                              ? 'text-black dark:text-white prose prose-sm sm:prose-base max-w-none sm:max-w-[65ch]' 
+                              : 'bg-transparent rounded-tl-none prose prose-sm sm:prose-base dark:prose-invert max-w-none sm:max-w-[65ch]'
                           }`}>
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm]}
-                              className="markdown-content [&>h1]:border [&>h1]:border-border [&>h1]:rounded-lg [&>h1]:p-4 [&>h1]:bg-muted/50 [&>h2]:border [&>h2]:border-border [&>h2]:rounded-lg [&>h2]:p-4 [&>h2]:bg-muted/50 [&>h3]:border [&>h3]:border-border [&>h3]:rounded-lg [&>h3]:p-4 [&>h3]:bg-muted/50 [&>p]:border [&>p]:border-border [&>p]:rounded-lg [&>p]:p-4 [&>p]:bg-background"
+                              className="markdown-content text-[13px] sm:text-base leading-relaxed"
+                              components={{
+                                table: ({ node, ...props }) => (
+                                  <div className="overflow-x-auto my-4">
+                                    <table {...props} />
+                                  </div>
+                                ),
+                              }}
                             >
                               {message.content}
                             </ReactMarkdown>
@@ -896,17 +1120,13 @@ export function DashboardComponent() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <h2 className="text-2xl font-bold mb-4">Welcome to Techtalk</h2>
-                <p className="text-center mb-4">Create a new group and start a chat to begin your conversation with our AI assistant.</p>
-                <Button onClick={createNewGroup}>Create New Group</Button>
-              </div>
+              <WelcomeGuide onCreateGroup={createNewGroup} />
             )}
           </main>
 
           {/* Footer - Updated to match centered layout */}
           {currentChat && (
-            <footer className="flex-none p-2 sm:p-4 border-t border-gray-400 dark:border-gray-700">
+            <footer className="flex-none px-2 py-2 sm:p-4 border-t border-gray-400 dark:border-gray-700">
               <div className="flex space-x-2 max-w-3xl mx-auto">
                 <Textarea 
                   placeholder="Type your message..." 
@@ -922,23 +1142,17 @@ export function DashboardComponent() {
                       handleSendMessage()
                     }
                   }}
-                  className="flex-1 min-h-[2.5rem] max-h-[200px] resize-none py-2 text-sm sm:text-base transition-all duration-200"
+                  className="flex-1 min-h-[40px] sm:min-h-[44px] max-h-[200px] resize-none py-2 text-sm sm:text-base transition-all duration-200 rounded-lg"
                   style={{
                     overflow: 'hidden',
-                    height: '2.5rem'
                   }}
                   rows={1}
                 />
-                <div className="flex gap-2">
-                  {/* Attachment button - hidden on mobile */}
-                  <Button variant="outline" size="icon" className="hidden sm:inline-flex">
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  
-                  {/* Send button - responsive */}
+                <div className="flex gap-1 sm:gap-2">
+                  {/* Send button - lebih compact di mobile */}
                   <Button 
                     onClick={handleSendMessage} 
-                    className="whitespace-nowrap min-w-[40px] sm:min-w-[80px]"
+                    className="h-[40px] sm:h-[44px] px-3 sm:px-4"
                     disabled={isLoading || !inputMessage.trim()}
                   >
                     <Send className="h-4 w-4 sm:mr-2" />

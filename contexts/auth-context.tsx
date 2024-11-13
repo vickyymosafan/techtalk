@@ -1,10 +1,12 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 
 interface AuthContextType {
   isAuthenticated: boolean
+  user: any | null
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
 }
@@ -12,44 +14,45 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<any | null>(null)
   const router = useRouter()
 
   // Check authentication status on mount
   useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated')
-    setIsAuthenticated(authStatus === 'true')
+    const token = Cookies.get('auth-token')
+    if (token) {
+      setIsAuthenticated(true)
+      // Optionally fetch user data here
+    }
   }, [])
 
-  // Redirect based on auth status
-  useEffect(() => {
-    const currentPath = window.location.pathname
-    if (isAuthenticated && currentPath === '/login') {
-      router.push('/dashboard')
-    } else if (!isAuthenticated && currentPath !== '/login') {
-      router.push('/login')
-    }
-  }, [isAuthenticated, router])
-
   const login = async (username: string, password: string) => {
-    // Add your actual authentication logic here
-    // Updated credentials: username: vicky, password: 1010
-    if (username === 'vicky' && password === '1010') {
-      setIsAuthenticated(true)
-      localStorage.setItem('isAuthenticated', 'true')
-      return true
+    try {
+      // Replace with your actual login API call
+      if (username === 'vi' && password === '1010') {
+        // Set authentication cookie
+        Cookies.set('auth-token', 'your-auth-token', { expires: 7 })
+        setIsAuthenticated(true)
+        setUser({ username })
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
     }
-    return false
   }
 
   const logout = () => {
+    Cookies.remove('auth-token')
     setIsAuthenticated(false)
-    localStorage.removeItem('isAuthenticated')
+    setUser(null)
     router.push('/login')
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

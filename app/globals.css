@@ -179,23 +179,123 @@ body {
 /* Responsive adjustments for mobile devices */
 @media (max-width: 640px) {
   .markdown-content {
-    @apply text-sm leading-snug;
+    @apply text-[13px] leading-relaxed;
+  }
+
+  .markdown-content h1 {
+    @apply text-lg font-bold;
+  }
+
+  .markdown-content h2 {
+    @apply text-base font-bold;
   }
 
   .markdown-content h3 {
-    @apply text-lg font-semibold;
+    @apply text-sm font-semibold;
+  }
+
+  .markdown-content p,
+  .markdown-content li {
+    @apply text-[13px] leading-relaxed;
   }
 
   .markdown-content pre {
-    @apply p-4;
+    @apply p-3 text-[12px];
   }
 
-  .markdown-content ul,
-  .markdown-content ol {
-    @apply pl-4;
+  .markdown-content code {
+    @apply text-[12px];
   }
 
-  .markdown-content li {
+  /* Adjust padding for mobile */
+  .markdown-content > h1,
+  .markdown-content > h2,
+  .markdown-content > h3,
+  .markdown-content > p,
+  .markdown-content > pre {
+    @apply p-3;
+  }
+
+  .markdown-content > ul,
+  .markdown-content > ol {
+    @apply p-3 pl-6;
+  }
+
+  /* Adjust table styles for mobile */
+  .markdown-content table {
+    @apply text-[12px];
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    @apply px-2 py-1.5;
+  }
+
+  /* Improve code block readability on mobile */
+  .markdown-content pre {
+    @apply max-w-[calc(100vw-2rem)] overflow-x-auto;
+  }
+
+  /* Adjust blockquote for mobile */
+  .markdown-content blockquote {
+    @apply pl-3 py-1 text-[13px];
+  }
+}
+
+/* Table Styles */
+.markdown-content table {
+  @apply w-full my-4 border-collapse rounded-lg overflow-hidden border border-border;
+  background-color: hsl(var(--background));
+}
+
+.markdown-content thead {
+  @apply bg-muted/50;
+}
+
+.markdown-content th {
+  @apply px-4 py-3 text-left font-semibold border-b border-border;
+}
+
+.markdown-content td {
+  @apply px-4 py-2 border-b border-border;
+}
+
+.markdown-content tr:last-child td {
+  @apply border-b-0;
+}
+
+.markdown-content tbody tr:hover {
+  @apply bg-muted/30 transition-colors;
+}
+
+/* Responsive table styles */
+@media (max-width: 640px) {
+  .markdown-content table {
     @apply text-sm;
+  }
+  
+  .markdown-content th,
+  .markdown-content td {
+    @apply px-2 py-1.5;
+  }
+}
+
+/* Add smooth scrolling for chat container */
+.chat-container {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize touch interactions */
+@media (hover: none) and (pointer: coarse) {
+  .chat-container {
+    @apply touch-pan-y;
+  }
+}
+
+/* Prevent content shift when keyboard appears on mobile */
+@supports (-webkit-touch-callout: none) {
+  .chat-container {
+    height: -webkit-fill-available;
   }
 }
