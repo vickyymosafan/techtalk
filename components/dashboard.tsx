@@ -645,11 +645,23 @@ export function DashboardComponent() {
   }, [editedCode])
 
   const deleteAllGroups = useCallback(() => {
-    // Directly delete all groups without confirmation
+    // Clear all related states
     setGroups([])
     setExpandedGroups([])
     setCurrentChat(null)
     setMessages({})
+    // Add these lines to clear rename-related states
+    setRenamingGroupId(null)
+    setRenamingChatId(null)
+    setNewName('')
+    // Clear new items indicators
+    setNewItems({})
+    // Clear chaining-related states
+    setChainedResponses({})
+    setIsChaining(false)
+    setCurrentChainCursor(0)
+    setRequestedCount(null)
+    setCurrentCount(0)
   }, [])
 
   const deleteAllChatsInGroup = useCallback((groupId: string) => {
