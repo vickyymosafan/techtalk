@@ -527,7 +527,14 @@ export function DashboardComponent() {
     return () => observer.disconnect()
   }, [isLoading, scrollToBottom])
 
-  // Update handleSendMessage
+  // Add effect to automatically open preview when code is detected
+  useEffect(() => {
+    if (codeContent && !isPreviewOpen) {
+      setIsPreviewOpen(true)
+    }
+  }, [codeContent])
+
+  // Update handleSendMessage to detect code blocks
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() && currentChat) {
       const count = extractRequestedCount(inputMessage)
@@ -580,17 +587,26 @@ export function DashboardComponent() {
         ],
         {
           onToken: (token) => {
-            setMessages(prev => ({
-              ...prev,
-              [currentChat.id]: [
-                ...updatedMessages,
-                {
-                  role: 'assistant',
-                  content: (prev[currentChat.id]?.slice(-1)[0]?.content || '') + token
-                }
-              ]
-            }))
-            // Use requestAnimationFrame for smoother scrolling during streaming
+            setMessages(prev => {
+              const prevContent = prev[currentChat.id]?.slice(-1)[0]?.content || ''
+              const newContent = prevContent + token
+              
+              // Check for code blocks in the response
+              const codeBlockMatch = newContent.match(/```(\w+)?\n([\s\S]*?)```/)
+              if (codeBlockMatch) {
+                const [, language, code] = codeBlockMatch
+                setCodeContent(code.trim())
+                setCurrentLanguage(language || getLanguageFromCode(code))
+              }
+
+              return {
+                ...prev,
+                [currentChat.id]: [
+                  ...updatedMessages,
+                  { role: 'assistant', content: newContent }
+                ]
+              }
+            })
             requestAnimationFrame(() => scrollToBottom(false))
           },
           onComplete: () => {
