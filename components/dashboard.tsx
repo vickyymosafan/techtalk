@@ -1446,9 +1446,9 @@ export function DashboardComponent() {
                           </Avatar>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className={`relative px-3 sm:p-5.5 rounded-full ${
+                          <div className={`relative px-3 sm:p-5.5 rounded-lg ${
                             message.role === "user" 
-                              ? "bg-[#F9F9F9] text-gray-800 hover:bg-[#F5F5F5] dark:bg-[#F9F9F9] dark:text-gray-800 border border-gray-100 transition-colors shadow-sm" 
+                              ? "text-gray-800 dark:text-white"
                               : "bg-card dark:bg-secondary/25 border border-border/40 dark:border-border/30 shadow-sm"
                           }`}>
                             <ReactMarkdown
