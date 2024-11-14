@@ -212,6 +212,8 @@ const extractRequestedCount = (message: string): number | null => {
 
 // Tambahkan komponen WelcomeGuide
 const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
+  const { theme, setTheme } = useTheme();
+  
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-4 md:p-6">
       {/* Container utama dengan max-width yang responsif */}
@@ -224,6 +226,26 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
           <p className="text-sm sm:text-base text-muted-foreground/80 leading-relaxed max-w-[80%] mx-auto">
             Mari mulai percakapan pertama Anda dengan langkah sederhana
           </p>
+          
+          {/* Tambahkan rekomendasi dark mode */}
+          {theme === 'light' && (
+            <div className="mt-4 p-3 bg-secondary/20 rounded-lg border border-border/40 max-w-[90%] mx-auto">
+              <div className="flex items-center gap-2 text-sm">
+                <Moon className="h-4 w-4 text-slate-700" />
+                <p className="text-muted-foreground">
+                  Tip: Gunakan Dark Mode untuk pengalaman yang lebih nyaman. 
+                  <Button 
+                    variant="link" 
+                    onClick={() => setTheme('dark')}
+                    className="px-1.5 h-auto text-primary hover:text-primary/80"
+                  >
+                    Aktifkan Dark Mode
+                  </Button>
+                  atau buka menu di sidebar.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-5 sm:space-y-6">
