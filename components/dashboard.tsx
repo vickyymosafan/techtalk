@@ -1329,12 +1329,12 @@ export function DashboardComponent() {
                       <div className="pt-2 mt-2 border-t border-border/40">
                         <Button
                           variant="ghost"
-                          className="w-full justify-center py-3 hover:bg-primary/5 dark:hover:bg-primary/10 group transition-all duration-300"
+                          className="w-full justify-start py-3 hover:bg-primary/5 dark:hover:bg-primary/10 group transition-all duration-300"
                           onClick={() => createNewChat(group.id)}
                         >
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center gap-2">
                             <FilePlus className="h-4.5 w-4.5 text-primary transition-transform duration-300 group-hover:scale-110" />
-                            <div className="flex flex-col items-center">
+                            <div className="flex flex-col items-start">
                               <span className="text-base font-medium text-primary">
                                 Obrolan Baru
                               </span>
