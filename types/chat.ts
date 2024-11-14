@@ -33,4 +33,16 @@ export interface ChainedResponse {
   id: string;
   content: string;
   timestamp: Date;
+}
+
+export interface PromptRow {
+  row_idx: number;
+  row: {
+    act: string;
+    prompt: string;
+  };
+}
+
+export interface DatasetResponse {
+  rows: PromptRow[];
 } 

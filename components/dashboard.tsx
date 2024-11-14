@@ -68,6 +68,8 @@ import type {
   Chat,
   Group as GroupType,
   ChainedResponse,
+  PromptRow,
+  DatasetResponse,
 } from "@/types/chat";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -529,6 +531,25 @@ const copyToClipboard = async (text: string) => {
 const inputClassName =
   "w-full px-2 py-1 text-sm bg-background border rounded focus:outline-none focus:ring-1 focus:ring-primary";
 
+// Tambahkan fungsi untuk fetch dataset
+const fetchPromptDataset = async (offset: number = 0, length: number = 100) => {
+  try {
+    const response = await fetch(
+      `https://datasets-server.huggingface.co/rows?dataset=fka%2Fawesome-chatgpt-prompts&config=default&split=train&offset=${offset}&length=${length}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch dataset');
+    }
+    
+    const data: DatasetResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching dataset:', error);
+    throw error;
+  }
+};
+
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
@@ -906,7 +927,7 @@ export function DashboardComponent() {
   const createNewGroup = useCallback(() => {
     const newGroup: GroupType = {
       id: crypto.randomUUID(),
-      name: `New Folder ${groups.length + 1}`,
+      name: `Folder ${groups.length + 1}`,
       createdAt: new Date(),
       chats: [],
     };
@@ -999,7 +1020,7 @@ export function DashboardComponent() {
     (groupId: string) => {
       const newChat = {
         id: crypto.randomUUID(),
-        name: `New Chat ${
+        name: `Obrolan ${
           groups.find((g) => g.id === groupId)?.chats.length ?? 0 + 1
         }`,
         type: "general",
@@ -1025,177 +1046,186 @@ export function DashboardComponent() {
     return () => styleSheet.remove();
   }, []);
 
+  // Tambahkan state untuk menyimpan prompts
+  const [prompts, setPrompts] = useState<PromptRow[]>([]);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
+
+  // Fungsi untuk load prompts
+  const loadPrompts = async () => {
+    setIsLoadingPrompts(true);
+    try {
+      const data = await fetchPromptDataset();
+      setPrompts(data.rows);
+    } catch (error) {
+      console.error('Error loading prompts:', error);
+    } finally {
+      setIsLoadingPrompts(false);
+    }
+  };
+
+  // Load prompts saat komponen mount
+  useEffect(() => {
+    loadPrompts();
+  }, []);
+
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
       <div className="flex vh-fix overflow-hidden bg-background text-foreground">
         {/* Sidebar - Update width untuk mobile */}
         <SheetContent
           side="left"
-          className="w-[85%] sm:w-[380px] p-0 h-[100dvh] overflow-hidden"
+          className="w-[280px] sm:w-[320px] p-0 h-[100dvh] overflow-hidden border-r border-border/40"
         >
-          <div className="flex flex-col h-full bg-secondary">
-            <div className="p-4 flex items-center space-x-2">
-              <Avatar>
-                <AvatarImage
-                  src={
-                    theme === "dark"
-                      ? "/images/logos/techtalk-white.png"
-                      : "/images/logos/techtalk-black.png"
-                  }
-                  alt="Techtalk Logo"
-                />
-                <AvatarFallback>
-                  <img
-                    src="/images/logos/techtalk-black.png"
-                    alt="Techtalk"
-                    className="w-6 h-6"
+          <div className="flex flex-col h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            {/* Header Section */}
+            <div className="border-b border-border/40 bg-secondary/20">
+              <div className="p-3 flex items-center space-x-2">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/10 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary/30">
+                  <AvatarImage
+                    src={
+                      theme === "dark"
+                        ? "/images/logos/techtalk-white.png"
+                        : "/images/logos/techtalk-black.png"
+                    }
+                    alt="Techtalk Logo"
+                    className="object-contain scale-90"
                   />
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-bold">Techtalk</span>
-              <div className="ml-auto flex items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleTheme}
-                  className="hover:bg-secondary/80"
-                >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleLogout}
-                  className="hover:bg-secondary/80 -ml-2.5"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                  <AvatarFallback className="bg-primary/5">TT</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold tracking-tight text-base bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
+                  Techtalk
+                </span>
+                <div className="ml-auto flex items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleTheme}
+                    className="h-7 w-7 rounded-full hover:bg-secondary/80 transition-colors"
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="h-3.5 w-3.5 text-amber-500" />
+                    ) : (
+                      <Moon className="h-3.5 w-3.5 text-slate-700" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLogout}
+                    className="h-7 w-7 rounded-full hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <div className="h-[2px] bg-gray-400 dark:bg-gray-700" />
-            <div className="p-4 space-y-2">
-              <div className="flex gap-2">
+
+            {/* Action Section dengan font yang lebih besar */}
+            <div className="p-3 space-y-2 bg-gradient-to-b from-secondary/20 to-transparent">
+              <div className="flex gap-1.5">
                 <Button
-                  className="flex-1 justify-start"
+                  className="flex-1 justify-start h-10 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/30 transition-all duration-300"
                   onClick={createNewGroup}
                 >
-                  <FolderPlus className="mr-2 h-4 w-4" /> Membuat Folder Baru
+                  <FolderPlus className="mr-2 h-5 w-5" /> 
+                  <span className="text-[15px] font-medium">Membuat Folder Baru</span>
                 </Button>
                 {groups.length > 0 && (
                   <Button
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
                     onClick={deleteAllGroups}
                     title="Delete all groups"
+                    className="h-10 w-10 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                   >
-                    <Trash className="h-4 w-4" />
+                    <Trash className="h-5 w-5" />
                   </Button>
                 )}
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
-              {groups.map((group) => (
-                <div
-                  key={group.id}
-                  className="mb-4 bg-secondary/30 rounded-lg overflow-hidden border border-gray-400 dark:border-gray-700 mx-2"
-                >
-                  {/* Group Header */}
-                  <div className="flex items-center justify-between px-4 py-2 bg-secondary/50 relative">
-                    <Button
-                      variant="ghost"
-                      className={`flex-1 justify-start relative group ${
-                        newItems[group.id]
-                          ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary"
-                          : ""
-                      }`}
-                      onClick={() => toggleGroupExpansion(group.id)}
-                    >
-                      <div className="flex items-center w-full pr-8">
-                        <div className="flex items-center gap-2 transition-transform duration-200 flex-shrink-0">
-                          {expandedGroups.includes(group.id) ? (
-                            <>
-                              <FolderOpen className="h-5 w-5 text-primary transition-colors duration-200" />
-                              <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
-                            </>
+            {/* Groups List */}
+            <ScrollArea className="flex-1 px-2 pb-4">
+              <div className="space-y-2 mt-2">
+                {groups.map((group) => (
+                  <div
+                    key={group.id}
+                    className="rounded-lg overflow-hidden border border-border/40 bg-card/30 backdrop-blur-sm transition-all duration-300 hover:border-border/60"
+                  >
+                    {/* Group Header dengan Dropdown Menu yang berfungsi */}
+                    <div className="relative">
+                      <Button
+                        variant="ghost"
+                        className={`w-full h-auto px-2 py-2 hover:bg-secondary/40 text-left ${
+                          newItems[group.id]
+                            ? "bg-primary/5 dark:bg-primary/10 border-l-[3px] border-primary"
+                            : ""
+                        } ${
+                          expandedGroups.includes(group.id)
+                            ? "bg-secondary/30"
+                            : "hover:bg-secondary/20"
+                        }`}
+                        onClick={() => toggleGroupExpansion(group.id)}
+                      >
+                        <div className="flex items-center w-full gap-2">
+                          <div className="flex items-center transition-transform duration-300 flex-shrink-0">
+                            {expandedGroups.includes(group.id) ? (
+                              <>
+                                <FolderOpen className="h-4.5 w-4.5 text-primary transition-colors" />
+                                <ChevronDown className="h-4 w-4 text-primary/70 ml-0.5" />
+                              </>
+                            ) : (
+                              <>
+                                <Folder className="h-4.5 w-4.5 text-muted-foreground" />
+                                <ChevronRight className="h-4 w-4 text-muted-foreground ml-0.5" />
+                              </>
+                            )}
+                          </div>
+                          {renamingGroupId === group.id ? (
+                            <input
+                              type="text"
+                              value={newName}
+                              onChange={(e) => setNewName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  saveNewName();
+                                }
+                              }}
+                              className="flex-1 px-2 py-1 text-base bg-background border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           ) : (
-                            <>
-                              <Folder className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
-                              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
-                            </>
+                            <span className="font-medium text-base text-left truncate">
+                              {group.name}
+                            </span>
                           )}
                         </div>
-                        <div className="flex-1 px-1 min-w-0">
-                          <span
-                            className={`font-medium block break-words ${
-                              group.name.length > 15
-                                ? "whitespace-normal line-clamp-2 h-[2.4em]"
-                                : "whitespace-nowrap"
-                            }`}
-                            style={{
-                              fontSize:
-                                group.name.length > 15
-                                  ? "12px"
-                                  : `clamp(0.875rem, ${
-                                      220 / group.name.length
-                                    }px, 1.125rem)`,
-                              lineHeight: "1.2",
-                              wordBreak: "break-word",
-                            }}
-                          >
-                            {renamingGroupId === group.id ? (
-                              <input
-                                type="text"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                onBlur={saveNewName}
-                                onKeyDown={(e) =>
-                                  e.key === "Enter" && saveNewName()
-                                }
-                                className={inputClassName}
-                              />
-                            ) : (
-                              <span>{group.name}</span>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </Button>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      </Button>
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="hover:bg-secondary/80 dark:hover:bg-secondary/50 flex-shrink-0"
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-secondary/60"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <MoreVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuItem
                             onSelect={() => renameGroup(group.id)}
-                            className="flex items-center"
+                            className="text-left text-base"
                           >
                             <Pencil className="h-4 w-4 mr-2" />
                             <span>Rename Group</span>
                           </DropdownMenuItem>
-                          {group.chats.length > 0 && (
-                            <DropdownMenuItem
-                              onSelect={() => deleteAllChatsInGroup(group.id)}
-                              className="flex items-center text-red-600 focus:text-red-600"
-                            >
-                              <Trash className="h-4 w-4 mr-2" />
-                              <span>Delete All Chats</span>
-                            </DropdownMenuItem>
-                          )}
                           <DropdownMenuItem
                             onSelect={() => deleteGroup(group.id)}
-                            className="flex items-center text-red-600 focus:text-red-600"
+                            className="text-left text-base text-red-600 focus:text-red-600"
                           >
                             <Trash className="h-4 w-4 mr-2" />
                             <span>Delete Group</span>
@@ -1203,171 +1233,117 @@ export function DashboardComponent() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </div>
 
-                  {/* Optional: Add this after the group header for first-time users */}
-                  {groups.length === 1 &&
-                    !expandedGroups.includes(group.id) && (
-                      <div className="px-4 py-2 text-xs text-muted-foreground bg-secondary/20 animate-pulse">
-                        <div className="flex items-center gap-1">
-                          <ChevronRight className="h-3 w-3" />
-                          <span>
-                            Tip: Click on the group to show/hide chats
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    {/* Chat Items dengan Dropdown untuk setiap chat */}
+                    <div className="p-2 space-y-1">
+                      {group.chats.map((chat) => (
+                        <div key={chat.id} className="relative group">
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-center py-2 px-3 transition-all duration-200 ${
+                              currentChat?.id === chat.id
+                                ? "bg-secondary/40 dark:bg-secondary/60"
+                                : "hover:bg-secondary/20"
+                            } ${
+                              newItems[chat.id]
+                                ? "bg-primary/5 dark:bg-primary/10"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setCurrentChat({
+                                ...chatTypes[chat.type],
+                                id: chat.id,
+                                name: chat.name,
+                                createdAt: chat.createdAt,
+                              })
+                            }
+                          >
+                            <div className="flex items-center w-full justify-center gap-2">
+                              <span className={`${chatTypes[chat.type]?.color} transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}>
+                                {chatTypes[chat.type]?.icon}
+                              </span>
+                              {renamingChatId === chat.id ? (
+                                <input
+                                  type="text"
+                                  value={newName}
+                                  onChange={(e) => setNewName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      saveNewName();
+                                    }
+                                  }}
+                                  className="flex-1 px-2 py-1 text-base bg-background border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                  autoFocus
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <span className="truncate text-base">
+                                  {chat.name}
+                                </span>
+                              )}
+                            </div>
+                          </Button>
 
-                  {/* Group Content with Animation */}
-                  <AnimatePresence>
-                    {expandedGroups.includes(group.id) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {/* Chat List Header */}
-                        <div className="px-6 py-2 text-xs font-medium text-muted-foreground bg-secondary/20">
-                          Chat List ({group.chats.length})
-                        </div>
-
-                        {/* Chat Items */}
-                        <div className="px-2 py-1 space-y-1">
-                          {group.chats.map((chat) => (
-                            <div
-                              key={chat.id}
-                              className="flex items-center justify-between pr-2 relative"
-                            >
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
-                                className={`flex-1 justify-start relative group hover:bg-secondary/80 ${
-                                  currentChat?.id === chat.id
-                                    ? "bg-secondary"
-                                    : ""
-                                } ${
-                                  newItems[chat.id]
-                                    ? "bg-primary/10 dark:bg-primary/20"
-                                    : ""
-                                }`}
-                                onClick={() =>
-                                  setCurrentChat({
-                                    ...chatTypes[chat.type],
-                                    id: chat.id,
-                                    name: chat.name,
-                                    createdAt: chat.createdAt,
-                                  })
-                                }
+                                size="icon"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 hover:bg-secondary/60 transition-opacity"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <div className="flex items-center w-full pr-8">
-                                  <div
-                                    className={`mr-2 ${
-                                      chatTypes[chat.type]?.color
-                                    } flex-shrink-0`}
-                                  >
-                                    {chatTypes[chat.type]?.icon}
-                                  </div>
-                                  <div className="flex-1 px-1 min-w-0">
-                                    <span
-                                      className={`block break-words ${
-                                        chat.name.length > 15
-                                          ? "whitespace-normal line-clamp-2 h-[2.4em]"
-                                          : "whitespace-nowrap"
-                                      }`}
-                                      style={{
-                                        fontSize:
-                                          chat.name.length > 15
-                                            ? "12px"
-                                            : `clamp(0.875rem, ${
-                                                220 / chat.name.length
-                                              }px, 1.125rem)`,
-                                        lineHeight: "1.2",
-                                        wordBreak: "break-word",
-                                      }}
-                                    >
-                                      {renamingChatId === chat.id ? (
-                                        <input
-                                          type="text"
-                                          value={newName}
-                                          onChange={(e) =>
-                                            setNewName(e.target.value)
-                                          }
-                                          onBlur={saveNewName}
-                                          onKeyDown={(e) =>
-                                            e.key === "Enter" && saveNewName()
-                                          }
-                                          className={inputClassName}
-                                        />
-                                      ) : (
-                                        <span>{chat.name}</span>
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="opacity-70 hover:opacity-100 hover:bg-secondary/80 dark:hover:bg-secondary/50 flex-shrink-0 absolute right-2"
-                                  >
-                                    <MoreVertical className="h-4 w-4 text-foreground dark:text-foreground/80" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onSelect={() =>
-                                      renameChat(group.id, chat.id)
-                                    }
-                                    className="flex items-center"
-                                  >
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    <span>Rename</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onSelect={() =>
-                                      deleteChat(group.id, chat.id)
-                                    }
-                                  >
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          ))}
-
-                          {/* New Chat Button */}
-                          <div className="px-2 pt-1 pb-2 border-t border-gray-400 dark:border-gray-700">
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start py-4 mt-2 border-dashed hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
-                              onClick={() => createNewChat(group.id)}
-                            >
-                              <div className="flex items-center gap-2">
-                                <FilePlus className="h-5 w-5 text-primary" />
-                                <div className="flex flex-col items-start">
-                                  <span className="font-medium text-primary">
-                                    Obrolan Baru
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    Buat obrolan baru dalam Folder ini
-                                  </span>
-                                </div>
-                              </div>
-                            </Button>
-                          </div>
-
-                          {/* Date */}
-                          <div className="px-6 py-2 text-xs text-muted-foreground">
-                            {format(group.createdAt, "MMM d, yyyy")}
-                          </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuItem
+                                onSelect={() => renameChat(group.id, chat.id)}
+                                className="text-left text-base"
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                <span>Rename Chat</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => deleteChat(group.id, chat.id)}
+                                className="text-left text-base text-red-600 focus:text-red-600"
+                              >
+                                <Trash className="h-4 w-4 mr-2" />
+                                <span>Delete Chat</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
+                      ))}
+
+                      {/* New Chat Button dengan font size yang lebih besar */}
+                      <div className="pt-2 mt-2 border-t border-border/40">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-center py-3 hover:bg-primary/5 dark:hover:bg-primary/10 group transition-all duration-300"
+                          onClick={() => createNewChat(group.id)}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <FilePlus className="h-4.5 w-4.5 text-primary transition-transform duration-300 group-hover:scale-110" />
+                            <div className="flex flex-col items-center">
+                              <span className="text-base font-medium text-primary">
+                                Obrolan Baru
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                Buat obrolan di folder ini
+                              </span>
+                            </div>
+                          </div>
+                        </Button>
+                      </div>
+
+                      <div className="px-2 py-2 text-sm text-muted-foreground/70 text-left">
+                        {format(group.createdAt, "MMM d, yyyy")}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </ScrollArea>
           </div>
         </SheetContent>
@@ -1482,6 +1458,39 @@ export function DashboardComponent() {
           {currentChat && (
             <footer className="flex-none px-2 py-2 sm:p-4 border-t input-area safe-area-padding">
               <div className="flex space-x-2 max-w-3xl mx-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-[36px] sm:h-[44px]"
+                    >
+                      <BrainCircuit className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[300px]">
+                    <div className="p-2">
+                      <div className="text-sm font-medium mb-2">Quick Prompts</div>
+                      <ScrollArea className="h-[300px]">
+                        {prompts.map((item) => (
+                          <div
+                            key={item.row_idx}
+                            className="p-2 hover:bg-secondary rounded-md cursor-pointer"
+                            onClick={() => {
+                              setInputMessage(item.row.prompt);
+                            }}
+                          >
+                            <div className="font-medium text-xs">{item.row.act}</div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {item.row.prompt}
+                            </div>
+                          </div>
+                        ))}
+                      </ScrollArea>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Textarea
                   placeholder="Type your message..."
                   value={inputMessage}
