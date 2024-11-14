@@ -483,6 +483,15 @@ const styles = `
       font-size: 0.75rem;
     }
   }
+
+  .tab-content-wrapper {
+    transition: width 0.2s ease-in-out;
+  }
+
+  .tab-trigger {
+    transition: width 0.2s ease-in-out;
+    min-width: 100px;
+  }
 `;
 
 // Update fungsi copyToClipboard
@@ -1534,100 +1543,112 @@ export function DashboardComponent() {
               initial={{ width: 0 }}
               animate={{ width: previewWidth }}
               exit={{ width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="hidden md:block h-[100dvh] overflow-hidden border-l border-gray-400 dark:border-gray-700"
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="hidden md:block h-[100dvh] overflow-hidden border-l border-border/30 bg-gradient-to-b from-background to-background/95 backdrop-blur-sm"
+              style={{ width: previewWidth }}
             >
               <Resizable
                 size={{ width: previewWidth, height: "100%" }}
-                onResizeStop={(e, direction, ref, d) => {
-                  setPreviewWidth(previewWidth + d.width);
+                onResize={(e, direction, ref, d) => {
+                  const newWidth = previewWidth + d.width;
+                  const clampedWidth = Math.min(Math.max(newWidth, 320), 800);
+                  setPreviewWidth(clampedWidth);
                 }}
-                minWidth={300}
+                minWidth={320}
                 maxWidth={800}
                 enable={{ left: true }}
+                handleClasses={{
+                  left: "w-1 hover:w-1.5 -ml-0.5 h-full cursor-col-resize transition-all duration-200 bg-primary/30 hover:bg-primary/50 rounded-full absolute left-0 top-0"
+                }}
               >
-                <div className="h-full flex flex-col bg-background">
-                  <div className="flex items-center justify-between p-2 border-b">
-                    <div className="flex-1">
+                <div className="h-full flex flex-col bg-gradient-to-b from-card/50 to-background/50 relative">
+                  {/* Header dengan styling yang lebih modern */}
+                  <div className="flex items-center justify-between p-3 border-b border-border/30 bg-gradient-to-r from-background/80 to-card/30 backdrop-blur">
+                    <div className="flex-1 pr-10">
                       <Tabs defaultValue="code" className="w-full">
-                        <TabsList className="w-full">
-                          <TabsTrigger value="code" className="flex-1">
-                            Code
+                        <TabsList className="w-full bg-background/40 backdrop-blur p-1 rounded-lg border border-border/30">
+                          <TabsTrigger 
+                            value="code" 
+                            className="flex-1 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md transition-all duration-200"
+                            style={{ width: `${previewWidth / 2 - 24}px` }}
+                          >
+                            <div className="flex items-center justify-center space-x-2 w-full">
+                              <Code2 className="h-4 w-4" />
+                              <span className="truncate">Code</span>
+                            </div>
                           </TabsTrigger>
-                          <TabsTrigger value="preview" className="flex-1">
-                            Preview
+                          <TabsTrigger 
+                            value="preview" 
+                            className="flex-1 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md transition-all duration-200"
+                            style={{ width: `${previewWidth / 2 - 24}px` }}
+                          >
+                            <div className="flex items-center justify-center space-x-2 w-full">
+                              <Terminal className="h-4 w-4" />
+                              <span className="truncate">Preview</span>
+                            </div>
                           </TabsTrigger>
                         </TabsList>
-                        <TabsContent
-                          value="code"
-                          className="h-[calc(100vh-6rem)]"
+
+                        {/* Code Tab Content */}
+                        <TabsContent 
+                          value="code" 
+                          className="h-[calc(100vh-6rem)] mt-4"
+                          style={{ width: `${previewWidth - 24}px` }}
                         >
                           <Suspense
                             fallback={
-                              <div className="h-full flex items-center justify-center">
-                                Loading editor...
+                              <div className="h-full flex items-center justify-center space-x-2">
+                                <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" />
                               </div>
                             }
                           >
-                            <div className="h-full w-full relative">
+                            <div className="h-full w-full relative rounded-lg overflow-hidden border border-border/30">
+                              {/* Language Selector dengan styling yang lebih menarik */}
                               <div className="absolute top-2 left-2 z-10">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-7 px-2 text-xs flex items-center gap-1"
+                                      className="h-8 px-3 bg-background/80 backdrop-blur border-border/40 hover:bg-background/90 transition-all duration-200"
                                     >
-                                      {
-                                        supportedLanguages.find(
+                                      <FileCode2 className="h-3.5 w-3.5 mr-2 text-primary/70" />
+                                      <span className="text-sm font-medium">
+                                        {supportedLanguages.find(
                                           (lang) => lang.id === currentLanguage
-                                        )?.name
-                                      }
-                                      <ChevronDown className="h-3 w-3" />
+                                        )?.name}
+                                      </span>
+                                      <ChevronDown className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent
                                     align="start"
-                                    className="max-h-[300px] overflow-y-auto"
+                                    className="max-h-[300px] overflow-y-auto w-48 bg-background/95 backdrop-blur border-border/30"
                                   >
                                     {supportedLanguages.map((lang) => (
                                       <DropdownMenuItem
                                         key={lang.id}
-                                        onSelect={() =>
-                                          setCurrentLanguage(lang.id)
-                                        }
-                                        className="text-xs"
+                                        onSelect={() => setCurrentLanguage(lang.id)}
+                                        className="text-sm py-2 cursor-pointer transition-colors hover:bg-primary/5 hover:text-primary focus:bg-primary/5 focus:text-primary"
                                       >
-                                        {lang.name}
+                                        <span className="flex items-center">
+                                          {lang.id === currentLanguage && (
+                                            <Check className="h-3.5 w-3.5 mr-2 text-primary" />
+                                          )}
+                                          <span className={lang.id === currentLanguage ? "text-primary" : ""}>
+                                            {lang.name}
+                                          </span>
+                                        </span>
                                       </DropdownMenuItem>
                                     ))}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
 
-                              <MonacoEditor
-                                height="100%"
-                                language={currentLanguage}
-                                theme={
-                                  theme === "dark" ? "vs-dark" : "vs-light"
-                                }
-                                value={isEditing ? editedCode : codeContent}
-                                onChange={handleCodeChange}
-                                options={{
-                                  minimap: { enabled: false },
-                                  fontSize: 14,
-                                  scrollBeyondLastLine: false,
-                                  padding: { top: 40, bottom: 16 },
-                                  readOnly: !isEditing,
-                                  wordWrap: "on",
-                                  lineNumbers: "on",
-                                  renderWhitespace: "selection",
-                                  formatOnPaste: true,
-                                  formatOnType: true,
-                                  automaticLayout: true,
-                                }}
-                              />
-                              <div className="absolute top-2 right-2 flex gap-2 bg-background/80 backdrop-blur-sm p-1 rounded-md shadow-sm border border-border">
+                              {/* Action Buttons dengan animasi hover yang lebih halus */}
+                              <div className="absolute top-2 right-2 flex gap-1.5 bg-background/90 backdrop-blur-sm p-1 rounded-lg border border-border/30 shadow-sm">
                                 {!isEditing ? (
                                   <Button
                                     variant="ghost"
@@ -1636,9 +1657,9 @@ export function DashboardComponent() {
                                       setIsEditing(true);
                                       setEditedCode(codeContent);
                                     }}
-                                    className="h-7 px-2 text-xs"
+                                    className="h-7 px-2.5 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                                   >
-                                    <Pencil className="h-3 w-3 mr-1" />
+                                    <Pencil className="h-3.5 w-3.5 mr-1.5" />
                                     Edit
                                   </Button>
                                 ) : (
@@ -1650,93 +1671,109 @@ export function DashboardComponent() {
                                         setIsEditing(false);
                                         setEditedCode(codeContent);
                                       }}
-                                      className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                      className="h-7 px-2.5 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
                                     >
-                                      <X className="h-3 w-3 mr-1" />
+                                      <X className="h-3.5 w-3.5 mr-1.5" />
                                       Cancel
                                     </Button>
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={handleSaveCode}
-                                      className="h-7 px-2 text-xs text-primary hover:text-primary"
+                                      className="h-7 px-2.5 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                                     >
-                                      <Check className="h-3 w-3 mr-1" />
+                                      <Check className="h-3.5 w-3.5 mr-1.5" />
                                       Save
                                     </Button>
                                   </>
                                 )}
                               </div>
+
+                              <MonacoEditor
+                                height="100%"
+                                language={currentLanguage}
+                                theme={theme === "dark" ? "vs-dark" : "vs-light"}
+                                value={isEditing ? editedCode : codeContent}
+                                onChange={handleCodeChange}
+                                options={{
+                                  minimap: { enabled: false },
+                                  fontSize: 14,
+                                  lineHeight: 1.6,
+                                  padding: { top: 48, bottom: 16 },
+                                  readOnly: !isEditing,
+                                  wordWrap: "on",
+                                  lineNumbers: "on",
+                                  renderWhitespace: "selection",
+                                  formatOnPaste: true,
+                                  formatOnType: true,
+                                  smoothScrolling: true,
+                                  cursorSmoothCaretAnimation: "on",
+                                  automaticLayout: true,
+                                  fontFamily: "'JetBrains Mono', monospace",
+                                  fontLigatures: true,
+                                }}
+                              />
                             </div>
                           </Suspense>
                         </TabsContent>
-                        <TabsContent
-                          value="preview"
-                          className="h-[calc(100vh-6rem)] p-4"
+
+                        {/* Preview Tab Content */}
+                        <TabsContent 
+                          value="preview" 
+                          className="h-[calc(100vh-6rem)] mt-4"
+                          style={{ width: `${previewWidth - 24}px` }}
                         >
-                          <div className="h-full border rounded p-4 overflow-auto">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-bold">Preview:</h3>
-                              <span className="text-sm text-muted-foreground">
-                                Language:{" "}
-                                {
-                                  supportedLanguages.find(
-                                    (lang) => lang.id === currentLanguage
-                                  )?.name
-                                }
+                          <div className="h-full rounded-lg border border-border/30 bg-card/30 backdrop-blur-sm overflow-hidden">
+                            <div className="flex items-center justify-between p-3 border-b border-border/30 bg-background/50">
+                              <h3 className="text-sm font-medium flex items-center gap-2">
+                                <Terminal className="h-4 w-4 text-primary/70" />
+                                Preview Output
+                              </h3>
+                              <span className="text-xs text-muted-foreground bg-background/50 px-2 py-1 rounded-md border border-border/30">
+                                {supportedLanguages.find(
+                                  (lang) => lang.id === currentLanguage
+                                )?.name}
                               </span>
                             </div>
 
-                            {/* Preview container */}
-                            <div className="w-full h-full bg-white rounded-lg shadow">
-                              {currentLanguage === "html" ||
-                              currentLanguage === "css" ? (
-                                // Render HTML/CSS preview
-                                <iframe
-                                  srcDoc={`
-                                    <html>
-                                      <head>
-                                        <style>
-                                          ${
-                                            currentLanguage === "css"
-                                              ? codeContent
-                                              : ""
-                                          }
-                                        </style>
-                                      </head>
-                                      <body>
-                                        ${
-                                          currentLanguage === "html"
-                                            ? codeContent
-                                            : ""
-                                        }
-                                      </body>
-                                    </html>
-                                  `}
-                                  className="w-full h-full border-none"
-                                  title="Preview"
-                                  sandbox="allow-scripts"
-                                />
+                            <div className="p-4 h-[calc(100%-3rem)] overflow-auto">
+                              {currentLanguage === "html" || currentLanguage === "css" ? (
+                                <div className="h-full w-full bg-background rounded-lg border border-border/30 overflow-hidden">
+                                  <iframe
+                                    srcDoc={`
+                                      <html>
+                                        <head>
+                                          <style>
+                                            body { margin: 0; padding: 16px; }
+                                            ${currentLanguage === "css" ? codeContent : ""}
+                                          </style>
+                                        </head>
+                                        <body>
+                                          ${currentLanguage === "html" ? codeContent : ""}
+                                        </body>
+                                      </html>
+                                    `}
+                                    className="w-full h-full border-none bg-white dark:bg-gray-900"
+                                    title="Preview"
+                                    sandbox="allow-scripts"
+                                  />
+                                </div>
                               ) : currentLanguage === "markdown" ? (
-                                // Render Markdown preview
-                                <div className="p-4 prose dark:prose-invert max-w-none">
+                                <div className="prose dark:prose-invert max-w-none">
                                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {codeContent}
                                   </ReactMarkdown>
                                 </div>
                               ) : currentLanguage === "svg" ? (
-                                // Render SVG preview
-                                <div
-                                  className="p-4 flex items-center justify-center"
-                                  dangerouslySetInnerHTML={{
-                                    __html: codeContent,
-                                  }}
-                                />
+                                <div className="flex items-center justify-center h-full bg-background/50 rounded-lg border border-border/30 p-4">
+                                  <div dangerouslySetInnerHTML={{ __html: codeContent }} />
+                                </div>
                               ) : (
-                                // Untuk bahasa lain yang tidak dapat dipratinjau langsung
-                                <div className="flex items-center justify-center h-full text-muted-foreground">
-                                  Preview not available for {currentLanguage}{" "}
-                                  code
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+                                  <Binary className="h-12 w-12 text-primary/20" />
+                                  <p className="text-sm">
+                                    Preview not available for {currentLanguage} code
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -1744,11 +1781,13 @@ export function DashboardComponent() {
                         </TabsContent>
                       </Tabs>
                     </div>
+
+                    {/* Close button dengan animasi hover - Update positioning */}
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={() => setIsPreviewOpen(false)}
-                      className="ml-2"
+                      className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary transition-all duration-200 absolute right-3 top-3 z-10"
                     >
                       <X className="h-4 w-4" />
                     </Button>
