@@ -216,9 +216,6 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
       <div className="w-full max-w-[280px] xs:max-w-[350px] sm:max-w-[450px] md:max-w-[500px] mx-auto">
         {/* Header dengan font yang lebih modern */}
         <div className="text-center mb-6 md:mb-8">
-          <h2 className="text-xl xs:text-2xl md:text-3xl font-bold mb-2 tracking-tight">
-            Selamat Datang di Techtalk! 👋
-          </h2>
           <p className="text-sm xs:text-base text-muted-foreground leading-relaxed">
             Mari mulai percakapan pertama Anda
           </p>
