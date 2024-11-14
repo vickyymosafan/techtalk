@@ -617,24 +617,11 @@ export function DashboardComponent() {
       const isNearBottom = scrollHeight - (scrollTop + containerHeight) < 100;
 
       if (isNearBottom || force) {
-        // Use smooth scroll for iOS
-        if (
-          typeof CSS !== "undefined" &&
-          CSS.supports("scroll-behavior", "smooth")
-        ) {
-          container.style.scrollBehavior = "smooth";
-          lastMessage.scrollIntoView({ block: "end" });
-          // Reset scroll behavior after animation
-          setTimeout(() => {
-            container.style.scrollBehavior = "auto";
-          }, 500);
-        } else {
-          // Fallback for browsers that don't support smooth scrolling
-          container.scrollTo({
-            top: scrollHeight,
-            behavior: "smooth",
-          });
-        }
+        // Use smooth scroll behavior
+        lastMessage.scrollIntoView({
+          behavior: force ? "auto" : "smooth",
+          block: "end"
+        });
       }
     }
   }, []);
@@ -695,13 +682,16 @@ export function DashboardComponent() {
         textarea.style.height = "2.5rem";
       }
 
-      // Initial scroll without smooth behavior
-      if (lastMessageRef.current) {
-        lastMessageRef.current.scrollIntoView({
-          behavior: "auto",
-          block: "end",
-        });
-      }
+      // Scroll ke pesan user dengan animasi smooth
+      setTimeout(() => {
+        if (mainContentRef.current) {
+          const scrollHeight = mainContentRef.current.scrollHeight;
+          mainContentRef.current.scrollTo({
+            top: scrollHeight,
+            behavior: "smooth"
+          });
+        }
+      }, 100);
 
       // Start AI response with empty content
       setMessages((prev) => ({
@@ -751,11 +741,30 @@ export function DashboardComponent() {
                 ],
               };
             });
-            requestAnimationFrame(() => scrollToBottom(false));
+
+            // Gunakan requestAnimationFrame untuk scroll yang lebih smooth
+            requestAnimationFrame(() => {
+              if (lastMessageRef.current) {
+                const container = mainContentRef.current;
+                if (!container) return;
+
+                // Cek apakah user sudah scroll up
+                const isNearBottom = 
+                  container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+                // Hanya scroll jika user berada di dekat bottom
+                if (isNearBottom) {
+                  lastMessageRef.current.scrollIntoView({ 
+                    behavior: "smooth",
+                    block: "end"
+                  });
+                }
+              }
+            });
           },
           onComplete: () => {
             setIsLoading(false);
-            // Final scroll with force enabled
+            // Final scroll dengan force enabled
             scrollToBottom(true);
           },
           onError: (error) => {
