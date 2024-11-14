@@ -375,52 +375,113 @@ const styles = `
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
+    background: transparent;
   }
   
-  .markdown-content > *:first-child {
-    margin-top: 0 !important;
+  .markdown-content > * {
+    position: relative;
+    padding: 0.5rem 0;
   }
-  
-  .markdown-content > *:last-child {
-    margin-bottom: 0 !important;
-  }
-  
+
   .markdown-content h1,
   .markdown-content h2,
   .markdown-content h3,
   .markdown-content h4,
   .markdown-content h5,
   .markdown-content h6 {
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid hsl(var(--border) / 0.2);
     line-height: 1.25;
   }
-  
+
+  .markdown-content h1:first-child,
+  .markdown-content h2:first-child,
+  .markdown-content h3:first-child,
+  .markdown-content h4:first-child,
+  .markdown-content h5:first-child,
+  .markdown-content h6:first-child {
+    margin-top: 0;
+  }
+
+  .markdown-content p {
+    margin: 0.75rem 0;
+    line-height: 1.6;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .markdown-content li {
+    margin: 0.375rem 0;
+    padding-left: 0.25rem;
+  }
+
+  .markdown-content blockquote {
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 3px solid hsl(var(--primary) / 0.5);
+    background: hsl(var(--muted) / 0.3);
+    border-radius: 0.375rem;
+  }
+
+  .markdown-content pre {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: hsl(var(--secondary) / 0.3);
+    border: 1px solid hsl(var(--border) / 0.2);
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .markdown-content code:not(pre code) {
+    padding: 0.2em 0.4em;
+    background: hsl(var(--secondary) / 0.3);
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+
+  .markdown-content table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+    font-size: 0.875em;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    padding: 0.5rem;
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .markdown-content th {
+    background: hsl(var(--secondary) / 0.3);
+    font-weight: 600;
+  }
+
   @media (max-width: 640px) {
     .markdown-content {
-      font-size: 13px;
-      line-height: 1.5;
+      font-size: 0.875rem;
     }
-    
-    // Tambahkan padding yang lebih kecil untuk mobile
+
+    .markdown-content h1 { font-size: 1.5rem; }
+    .markdown-content h2 { font-size: 1.25rem; }
+    .markdown-content h3 { font-size: 1.125rem; }
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 { font-size: 1rem; }
+
     .markdown-content pre {
       margin: 0.75rem -0.5rem;
-      border-radius: 0.375rem;
+      padding: 0.75rem;
+      font-size: 0.75rem;
     }
-    
-    // Sesuaikan ukuran font untuk mobile
-    .markdown-content code {
-      font-size: 11px;
-    }
-    
-    // Tambahkan safe area padding untuk iOS
-    .safe-area-padding {
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    
-    // Fix tinggi viewport untuk mobile
-    .vh-fix {
-      height: 100vh;
-      height: -webkit-fill-available;
-      height: stretch;
+
+    .markdown-content code:not(pre code) {
+      font-size: 0.75rem;
     }
   }
 `;
@@ -1372,187 +1433,42 @@ export function DashboardComponent() {
                         message.role === "user"
                           ? "justify-end"
                           : "justify-start"
-                      }`}
+                      } mb-0.5`}
                     >
                       <div
-                        className={`flex items-start gap-1.5 sm:gap-3 ${
+                        className={`flex items-start gap-1 ${
                           message.role === "user"
-                            ? "flex-row-reverse max-w-[92%] sm:max-w-[85%]"
-                            : "flex-row w-[calc(100%-32px)] sm:w-[90%]"
+                            ? "flex-row-reverse max-w-[85%]"
+                            : "flex-row w-[calc(100%-24px)]"
                         }`}
                       >
-                        <Avatar className="w-8 h-8 flex-shrink-0">
-                          {message.role === "user" ? (
-                            <>
-                              <AvatarImage
-                                src="/images/logos/user.png"
-                                alt="User"
-                              />
-                              <AvatarFallback>U</AvatarFallback>
-                            </>
-                          ) : (
-                            <>
-                              <AvatarImage
-                                src="/images/logos/ai.png"
-                                alt="AI"
-                              />
-                              <AvatarFallback>AI</AvatarFallback>
-                            </>
-                          )}
-                        </Avatar>
+                        {message.role !== "user" && (
+                          <Avatar className="w-4 h-4 flex-shrink-0 ring-1 ring-background">
+                            <AvatarImage src="/images/logos/ai.png" alt="AI" />
+                            <AvatarFallback>AI</AvatarFallback>
+                          </Avatar>
+                        )}
                         <div className="flex-1 min-w-0">
-                          <div
-                            className={`relative p-5.5 sm:p-3 rounded-lg ${
-                              message.role === "user"
-                                ? "bg-primary/90 text-primary-foreground"
-                                : "bg-muted"
-                            }`}
-                          >
+                          <div className={`relative px-3 sm:p-5.5 rounded-full ${
+                            message.role === "user" 
+                              ? "bg-[#F9F9F9] text-gray-800 hover:bg-[#F5F5F5] dark:bg-[#F9F9F9] dark:text-gray-800 border border-gray-100 transition-colors shadow-sm" 
+                              : "bg-card dark:bg-secondary/25 border border-border/40 dark:border-border/30 shadow-sm"
+                          }`}>
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
-                              className="markdown-content text-[13px] sm:text-base leading-relaxed tracking-normal break-words"
+                              className="markdown-content"
                               components={{
-                                // Update heading components to have proper mobile spacing
-                                h1: ({ node, ...props }) => (
-                                  <h1
-                                    {...props}
-                                    className="text-lg sm:text-xl font-bold mt-3 mb-2 first:mt-0"
-                                  />
-                                ),
-                                h2: ({ node, ...props }) => (
-                                  <h2
-                                    {...props}
-                                    className="text-base sm:text-lg font-semibold mt-3 mb-2 first:mt-0"
-                                  />
-                                ),
-                                h3: ({ node, ...props }) => (
-                                  <h3
-                                    {...props}
-                                    className="text-sm sm:text-base font-semibold mt-3 mb-2 first:mt-0"
-                                  />
-                                ),
-                                h4: ({ node, ...props }) => (
-                                  <h4
-                                    {...props}
-                                    className="text-sm font-medium mt-3 mb-2 first:mt-0"
-                                  />
-                                ),
-                                h5: ({ node, ...props }) => (
-                                  <h5
-                                    {...props}
-                                    className="text-xs sm:text-sm font-medium mt-3 mb-2 first:mt-0"
-                                  />
-                                ),
-                                h6: ({ node, ...props }) => (
-                                  <h6
-                                    {...props}
-                                    className="text-xs font-medium mt-3 mb-2 first:mt-0"
-                                  />
-                                ),
-                                // Update paragraph spacing
                                 p: ({ node, ...props }) => (
-                                  <p {...props} className="mb-2 last:mb-0" />
+                                  <p {...props} className="mb-2 last:mb-0 text-[19px] sm:text-[15px]" />
                                 ),
-                                // Update list spacing
-                                ul: ({ node, ...props }) => (
-                                  <ul
-                                    {...props}
-                                    className="list-disc pl-4 mb-2 last:mb-0"
-                                  />
-                                ),
-                                ol: ({ node, ...props }) => (
-                                  <ol
-                                    {...props}
-                                    className="list-decimal pl-4 mb-2 last:mb-0"
-                                  />
-                                ),
-                                li: ({ node, ...props }) => (
-                                  <li {...props} className="mb-1 last:mb-0" />
-                                ),
-                                // Tetapkan gaya blok kode yang ada
-                                code: ({
-                                  inline,
-                                  className,
-                                  children,
-                                  ...props
-                                }: any) => {
-                                  if (inline) {
-                                    return (
-                                      <code
-                                        {...props}
-                                        className="px-1 py-0.5 bg-secondary rounded text-[11px] sm:text-sm font-mono"
-                                      >
-                                        {children}
-                                      </code>
-                                    );
-                                  }
-
-                                  // For code blocks
-                                  const match = /language-(\w+)/.exec(
-                                    className || ""
-                                  );
-                                  const language = match ? match[1] : "";
-
-                                  return (
-                                    <div className="relative group -mx-2.5 sm:mx-0 bg-secondary rounded-lg max-w-[calc(100vw-80px)] sm:max-w-none">
-                                      {language && (
-                                        <div className="absolute top-2 left-2 px-2 py-1 text-[10px] sm:text-xs text-muted-foreground bg-background/50 rounded-md">
-                                          {language}
-                                        </div>
-                                      )}
-
-                                      <div className="overflow-x-auto hide-scrollbar">
-                                        <code
-                                          {...props}
-                                          className={`
-                                          block 
-                                          pt-8 pb-2 px-3 
-                                          sm:pt-9 sm:pb-3 sm:px-4
-                                          text-[11px] leading-relaxed 
-                                          sm:text-sm 
-                                          font-mono 
-                                          whitespace-pre
-                                          ${
-                                            language
-                                              ? `language-${language}`
-                                              : ""
-                                          }
-                                        `}
-                                        >
-                                          {children}
-                                        </code>
-                                      </div>
-
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute top-2 right-2 h-5 w-5 sm:h-6 sm:w-6
-                                          opacity-100 sm:opacity-0 sm:group-hover:opacity-100
-                                          hover:opacity-100
-                                          focus:opacity-100
-                                          bg-secondary/80 backdrop-blur-sm
-                                          transition-all duration-200
-                                          z-10"
-                                        onClick={() =>
-                                          copyToClipboard(String(children))
-                                        }
-                                        title="Copy code"
-                                      >
-                                        <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                      </Button>
-                                    </div>
-                                  );
-                                },
-                                pre: ({ node, ...props }) => (
-                                  <pre
-                                    {...props}
-                                    className="my-2 sm:my-3 overflow-hidden bg-transparent first:mt-0 last:mb-0"
-                                  />
-                                ),
+                                // ... other components
                               }}
                             >
                               {message.content}
                             </ReactMarkdown>
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground opacity-70">
+                            {format(new Date(), "HH:mm")}
                           </div>
                         </div>
                       </div>

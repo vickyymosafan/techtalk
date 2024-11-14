@@ -29,8 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string) => {
     try {
-      // Replace with your actual login API call
-      if (username === 'vi' && password === '1010') {
+      // Use environment variables for credentials
+      const validUsername = process.env.NEXT_PUBLIC_USERNAME;
+      const validPassword = process.env.NEXT_PUBLIC_PASSWORD;
+
+      if (username === validUsername && password === validPassword) {
         // Set authentication cookie
         Cookies.set('auth-token', 'your-auth-token', { expires: 7 })
         setIsAuthenticated(true)
