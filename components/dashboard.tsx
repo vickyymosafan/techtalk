@@ -216,127 +216,137 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-4 md:p-6">
       {/* Container utama dengan max-width yang responsif */}
       <div className="w-full max-w-[280px] xs:max-w-[350px] sm:max-w-[450px] md:max-w-[500px] mx-auto">
-        {/* Header dengan font yang lebih modern */}
-        <div className="text-center mb-6 md:mb-8">
-          <p className="text-sm xs:text-base text-muted-foreground leading-relaxed">
-            Mari mulai percakapan pertama Anda
+        {/* Header dengan animasi subtle */}
+        <div className="text-center mb-8 md:mb-10">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-3 bg-gradient-to-r from-primary/90 to-primary/60 bg-clip-text text-transparent">
+            Selamat Datang di Techtalk! 👋
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground/80 leading-relaxed max-w-[80%] mx-auto">
+            Mari mulai percakapan pertama Anda dengan langkah sederhana
           </p>
         </div>
 
-        <div className="space-y-4 sm:space-y-6">
-          {/* Langkah 1 dengan font yang lebih readable */}
-          <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 text-left relative">
-            {/* Indikator aktif */}
-            <div className="absolute -left-1 sm:-left-2 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary rounded-full" />
+        <div className="space-y-5 sm:space-y-6">
+          {/* Langkah 1 dengan efek hover dan shadow subtle */}
+          <div className="group relative bg-gradient-to-br from-background to-secondary/20 rounded-xl p-4 sm:p-5 text-left border border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_0_25px_-5px] hover:shadow-primary/10">
+            {/* Indikator aktif dengan animasi */}
+            <div className="absolute -left-0.5 sm:-left-1 top-1/2 -translate-y-1/2 w-1 h-16 bg-gradient-to-b from-primary to-primary/50 rounded-full group-hover:scale-y-110 transition-transform duration-300" />
 
-            <h3 className="font-semibold flex items-center gap-2 mb-2 sm:mb-3">
-              <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium">
-                1
-              </span>
-              <span className="text-sm sm:text-base tracking-tight">
-                Buat Folder Baru
-              </span>
-            </h3>
-
-            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-              Pertama, buat Folder untuk mengatur percakapan Anda. Anggap saja
-              seperti folder untuk menyimpan obrolan yang saling berhubungan.
-            </p>
-
-            {/* Contoh Folder - Scrollable pada mobile */}
-            <div className="overflow-x-auto pb-2 mb-3 hide-scrollbar">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground min-w-max">
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <FolderPlus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  Contoh Folder:
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary ring-1 ring-primary/25 group-hover:ring-primary/40 transition-all duration-300">
+                  <span className="text-sm font-semibold">1</span>
                 </span>
-                <span className="bg-secondary/50 px-2 py-1 rounded whitespace-nowrap">
-                  Proyek Kerja
-                </span>
-                <span className="bg-secondary/50 px-2 py-1 rounded whitespace-nowrap">
-                  Catatan Pribadi
-                </span>
-                <span className="bg-secondary/50 px-2 py-1 rounded whitespace-nowrap">
-                  Belajar
-                </span>
+                <h3 className="text-base sm:text-lg font-semibold tracking-tight">
+                  Buat Folder Baru
+                </h3>
               </div>
-            </div>
 
-            <Button
-              onClick={onCreateGroup}
-              className="w-full bg-primary hover:bg-primary/90 h-9 sm:h-10 text-xs sm:text-sm"
-            >
-              <FolderPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Klik Disini
-            </Button>
-          </div>
-
-          {/* Langkah 2 dengan font yang lebih konsisten */}
-          <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 text-left opacity-70">
-            <h3 className="font-semibold flex items-center gap-2 mb-2 sm:mb-3">
-              <span className="bg-primary/20 rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium">
-                2
-              </span>
-              <span className="text-sm sm:text-base tracking-tight">
-                Mulai Obrolan Baru
-              </span>
-            </h3>
-
-            <div className="space-y-2 sm:space-y-3">
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Setelah membuat Folder, Anda akan melihat tombol "Obrolan Baru".
-                Klik untuk memulai percakapan.
+              <p className="text-sm text-muted-foreground/90 mb-4 pl-11 leading-relaxed">
+                Mulai dengan membuat folder untuk mengorganisir percakapan Anda. Seperti direktori yang menyimpan obrolan terkait.
               </p>
-              <div className="bg-secondary/20 rounded-lg p-2 sm:p-3">
-                <div className="flex items-center gap-2 text-xs sm:text-sm">
-                  <FilePlus className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  <span>Cari tombol ini di dalam Folder Anda</span>
+
+              {/* Contoh Folder dengan scrolling halus */}
+              <div className="mb-4 pl-11">
+                <div className="overflow-x-auto pb-2 hide-scrollbar">
+                  <div className="flex items-center gap-2 min-w-max">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                      <FolderPlus className="h-3.5 w-3.5" />
+                      Contoh:
+                    </span>
+                    {["Proyek Kerja", "Catatan Pribadi", "Belajar Coding", "Ide Bisnis"].map((folder) => (
+                      <span key={folder} className="px-2.5 py-1.5 text-xs rounded-md bg-secondary/40 border border-border/40 text-foreground/80 whitespace-nowrap">
+                        {folder}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              <div className="pl-11">
+                <Button
+                  onClick={onCreateGroup}
+                  className="w-full bg-primary/90 hover:bg-primary text-primary-foreground h-9 sm:h-10 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <FolderPlus className="mr-2 h-4 w-4" />
+                  Buat Folder Sekarang
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Langkah 3: Mulai Mengobrol */}
-          <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 text-left opacity-70">
-            <h3 className="font-semibold flex items-center gap-2 mb-2 sm:mb-3">
-              <span className="bg-primary/20 rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium">
-                3
+          {/* Langkah 2 dengan desain card yang lebih menarik */}
+          <div className="group relative bg-gradient-to-br from-background to-secondary/10 rounded-xl p-4 sm:p-5 text-left border border-border/40 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/30 text-muted-foreground ring-1 ring-border/40 transition-all duration-300">
+                <span className="text-sm font-semibold">2</span>
               </span>
-              <span className="text-sm sm:text-base tracking-tight">
-                Mulai Mengobrol
-              </span>
-            </h3>
+              <h3 className="text-base sm:text-lg font-semibold tracking-tight">
+                Mulai Obrolan Baru
+              </h3>
+            </div>
 
-            <div className="space-y-2 sm:space-y-3">
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Sekarang Anda bisa mulai mengobrol! Berikut beberapa contoh
-                pertanyaan yang bisa Anda ajukan:
+            <div className="space-y-3 pl-11">
+              <p className="text-sm text-muted-foreground/90 leading-relaxed">
+                Setelah membuat folder, cari tombol "Obrolan Baru" untuk memulai percakapan.
+              </p>
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/20 border border-border/40">
+                <FilePlus className="h-4 w-4 text-primary/70" />
+                <span className="text-sm">Tombol ini akan muncul di dalam folder Anda</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Langkah 3 dengan contoh yang lebih visual */}
+          <div className="group relative bg-gradient-to-br from-background to-secondary/10 rounded-xl p-4 sm:p-5 text-left border border-border/40 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/30 text-muted-foreground ring-1 ring-border/40 transition-all duration-300">
+                <span className="text-sm font-semibold">3</span>
+              </span>
+              <h3 className="text-base sm:text-lg font-semibold tracking-tight">
+                Mulai Mengobrol
+              </h3>
+            </div>
+
+            <div className="space-y-3 pl-11">
+              <p className="text-sm text-muted-foreground/90 leading-relaxed">
+                Sekarang Anda bisa mulai mengobrol! Berikut beberapa contoh pertanyaan:
               </p>
               <div className="space-y-2">
-                <div className="bg-secondary/20 rounded-lg p-2 text-xs sm:text-sm">
-                  "Tolong jelaskan cara kerja React hooks"
-                </div>
-                <div className="bg-secondary/20 rounded-lg p-2 text-xs sm:text-sm">
-                  "Buatkan fungsi Python untuk mengurutkan daftar"
-                </div>
-                <div className="bg-secondary/20 rounded-lg p-2 text-xs sm:text-sm">
-                  "Jelaskan bagaimana database bekerja"
-                </div>
+                {[
+                  { icon: <Code2 className="h-4 w-4" />, text: "Jelaskan cara kerja React hooks" },
+                  { icon: <FileCode2 className="h-4 w-4" />, text: "Buatkan fungsi Python untuk mengurutkan array" },
+                  { icon: <Database className="h-4 w-4" />, text: "Jelaskan konsep database NoSQL" },
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-secondary/20 border border-border/40 group-hover:border-border/60 transition-all duration-300">
+                    <span className="text-primary/70">{item.icon}</span>
+                    <span className="text-sm">{item.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Tips Cepat */}
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 text-primary font-medium mb-2">
-              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
-              Tips Cepat
+          {/* Tips dengan desain yang lebih eye-catching */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 p-4">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="flex items-center gap-2 text-primary mb-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="font-medium">Tips Berguna</span>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground/90 leading-relaxed">
+                  <span className="font-medium text-foreground/90">Enter</span> untuk mengirim pesan
+                </p>
+                <p className="text-sm text-muted-foreground/90 leading-relaxed">
+                  <span className="font-medium text-foreground/90">Shift + Enter</span> untuk baris baru
+                </p>
+                <p className="text-sm text-muted-foreground/90 leading-relaxed">
+                  <span className="font-medium text-foreground/90">≡</span> untuk mengelola folder & obrolan
+                </p>
+              </div>
             </div>
-            <p className="text-muted-foreground">
-              Tekan Enter untuk mengirim pesan dan Shift + Enter untuk baris
-              baru. Gunakan menu samping (≡) untuk mengelola Folder dan obrolan
-              Anda.
-            </p>
           </div>
         </div>
       </div>
@@ -1367,7 +1377,7 @@ export function DashboardComponent() {
                 </Button>
               </SheetTrigger>
               <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight">
-                {currentChat?.name || "Selamat Datang di Techtalk! 👋"}
+                {currentChat?.name || ""}
               </h1>
             </div>
 
