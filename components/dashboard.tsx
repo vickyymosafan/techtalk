@@ -485,6 +485,7 @@ export function DashboardComponent() {
     "preview-open",
     true
   );
+
   const [previewWidth, setPreviewWidth] = useLocalStorage("preview-width", 400);
   const [newItems, setNewItems] = useState<{ [key: string]: boolean }>({});
   const [isEditing, setIsEditing] = useState(false);
@@ -494,22 +495,13 @@ export function DashboardComponent() {
   const [chainedResponses, setChainedResponses] = useState<{
     [key: string]: ChainedResponse[];
   }>({});
+
   const [currentChainCursor, setCurrentChainCursor] = useState(0);
-
-  // Tambahkan state untuk hasil eksekusi
   const [executionResult, setExecutionResult] = useState<string>("");
-
-  // Tambahkan state untuk mobile menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Add new ref for message container
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const messageContainerRef = React.useRef<HTMLDivElement>(null);
-
-  // Add new ref for the last message
   const lastMessageRef = useRef<HTMLDivElement>(null);
-
-  // Add new ref for main content container
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   // Enhanced scroll to bottom function for mobile support
@@ -1477,7 +1469,7 @@ export function DashboardComponent() {
                                 li: ({ node, ...props }) => (
                                   <li {...props} className="mb-1 last:mb-0" />
                                 ),
-                                // Keep existing code block styling
+                                // Tetapkan gaya blok kode yang ada
                                 code: ({
                                   inline,
                                   className,
@@ -1613,7 +1605,7 @@ export function DashboardComponent() {
           )}
         </div>
 
-        {/* Code Preview Panel - Updated height */}
+        {/* Code Preview Panel */}
         <AnimatePresence>
           {codeContent && isPreviewOpen && (
             <motion.div
@@ -1819,7 +1811,7 @@ export function DashboardComponent() {
                                   }}
                                 />
                               ) : (
-                                // For other languages that can't be previewed directly
+                                // Untuk bahasa lain yang tidak dapat dipratinjau langsung
                                 <div className="flex items-center justify-center h-full text-muted-foreground">
                                   Preview not available for {currentLanguage}{" "}
                                   code
@@ -1845,7 +1837,7 @@ export function DashboardComponent() {
           )}
         </AnimatePresence>
 
-        {/* Toggle Preview Button - Updated positioning with right margin */}
+        {/* Toggle Preview Button */}
         {codeContent && !isPreviewOpen && (
           <Button
             variant="outline"
@@ -1857,7 +1849,7 @@ export function DashboardComponent() {
           </Button>
         )}
 
-        {/* Mobile Code Preview Button - Updated positioning with right margin */}
+        {/* Tombol Pratinjau Kode untuk Mobile*/}
         {codeContent && (
           <Button
             variant="outline"
