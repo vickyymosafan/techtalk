@@ -213,7 +213,7 @@ const extractRequestedCount = (message: string): number | null => {
 // Tambahkan komponen WelcomeGuide
 const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
   const { theme, setTheme } = useTheme();
-  
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-4 md:p-6">
       {/* Container utama dengan max-width yang responsif */}
@@ -226,17 +226,17 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
           <p className="text-sm sm:text-base text-muted-foreground/80 leading-relaxed max-w-[80%] mx-auto">
             Mari mulai percakapan pertama Anda dengan langkah sederhana
           </p>
-          
+
           {/* Tambahkan rekomendasi dark mode */}
-          {theme === 'light' && (
+          {theme === "light" && (
             <div className="mt-4 p-3 bg-secondary/20 rounded-lg border border-border/40 max-w-[90%] mx-auto">
               <div className="flex items-center gap-2 text-sm">
                 <Moon className="h-4 w-4 text-slate-700" />
                 <p className="text-muted-foreground">
-                  Tip: Gunakan Dark Mode untuk pengalaman yang lebih nyaman. 
-                  <Button 
-                    variant="link" 
-                    onClick={() => setTheme('dark')}
+                  Tip: Gunakan Dark Mode untuk pengalaman yang lebih nyaman.
+                  <Button
+                    variant="link"
+                    onClick={() => setTheme("dark")}
                     className="px-1.5 h-auto text-primary hover:text-primary/80"
                   >
                     Aktifkan Dark Mode
@@ -265,7 +265,8 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
               </div>
 
               <p className="text-sm text-muted-foreground/90 mb-4 pl-11 leading-relaxed">
-                Mulai dengan membuat folder untuk mengorganisir percakapan Anda. Seperti direktori yang menyimpan obrolan terkait.
+                Mulai dengan membuat folder untuk mengorganisir percakapan Anda.
+                Seperti direktori yang menyimpan obrolan terkait.
               </p>
 
               {/* Contoh Folder dengan scrolling halus */}
@@ -276,8 +277,16 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
                       <FolderPlus className="h-3.5 w-3.5" />
                       Contoh:
                     </span>
-                    {["Proyek Kerja", "Catatan Pribadi", "Belajar Coding", "Ide Bisnis"].map((folder) => (
-                      <span key={folder} className="px-2.5 py-1.5 text-xs rounded-md bg-secondary/40 border border-border/40 text-foreground/80 whitespace-nowrap">
+                    {[
+                      "Proyek Kerja",
+                      "Catatan Pribadi",
+                      "Belajar Coding",
+                      "Ide Bisnis",
+                    ].map((folder) => (
+                      <span
+                        key={folder}
+                        className="px-2.5 py-1.5 text-xs rounded-md bg-secondary/40 border border-border/40 text-foreground/80 whitespace-nowrap"
+                      >
                         {folder}
                       </span>
                     ))}
@@ -310,11 +319,14 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
 
             <div className="space-y-3 pl-11">
               <p className="text-sm text-muted-foreground/90 leading-relaxed">
-                Setelah membuat folder, cari tombol "Obrolan Baru" untuk memulai percakapan.
+                Setelah membuat folder, cari tombol "Obrolan Baru" untuk memulai
+                percakapan.
               </p>
               <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/20 border border-border/40">
                 <FilePlus className="h-4 w-4 text-primary/70" />
-                <span className="text-sm">Tombol ini akan muncul di dalam folder Anda</span>
+                <span className="text-sm">
+                  Tombol ini akan muncul di dalam folder Anda
+                </span>
               </div>
             </div>
           </div>
@@ -332,15 +344,28 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
 
             <div className="space-y-3 pl-11">
               <p className="text-sm text-muted-foreground/90 leading-relaxed">
-                Sekarang Anda bisa mulai mengobrol! Berikut beberapa contoh pertanyaan:
+                Sekarang Anda bisa mulai mengobrol! Berikut beberapa contoh
+                pertanyaan:
               </p>
               <div className="space-y-2">
                 {[
-                  { icon: <Code2 className="h-4 w-4" />, text: "Jelaskan cara kerja React hooks" },
-                  { icon: <FileCode2 className="h-4 w-4" />, text: "Buatkan fungsi Python untuk mengurutkan array" },
-                  { icon: <Database className="h-4 w-4" />, text: "Jelaskan konsep database NoSQL" },
+                  {
+                    icon: <Code2 className="h-4 w-4" />,
+                    text: "Jelaskan cara kerja React hooks",
+                  },
+                  {
+                    icon: <FileCode2 className="h-4 w-4" />,
+                    text: "Buatkan fungsi Python untuk mengurutkan array",
+                  },
+                  {
+                    icon: <Database className="h-4 w-4" />,
+                    text: "Jelaskan konsep database NoSQL",
+                  },
                 ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-secondary/20 border border-border/40 group-hover:border-border/60 transition-all duration-300">
+                  <div
+                    key={index}
+                    className="flex items-center gap-2.5 p-2.5 rounded-lg bg-secondary/20 border border-border/40 group-hover:border-border/60 transition-all duration-300"
+                  >
                     <span className="text-primary/70">{item.icon}</span>
                     <span className="text-sm">{item.text}</span>
                   </div>
@@ -359,13 +384,18 @@ const WelcomeGuide = ({ onCreateGroup }: { onCreateGroup: () => void }) => {
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground/90 leading-relaxed">
-                  <span className="font-medium text-foreground/90">Enter</span> untuk mengirim pesan
+                  <span className="font-medium text-foreground/90">Enter</span>{" "}
+                  untuk mengirim pesan
                 </p>
                 <p className="text-sm text-muted-foreground/90 leading-relaxed">
-                  <span className="font-medium text-foreground/90">Shift + Enter</span> untuk baris baru
+                  <span className="font-medium text-foreground/90">
+                    Shift + Enter
+                  </span>{" "}
+                  untuk baris baru
                 </p>
                 <p className="text-sm text-muted-foreground/90 leading-relaxed">
-                  <span className="font-medium text-foreground/90">≡</span> untuk mengelola folder & obrolan
+                  <span className="font-medium text-foreground/90">≡</span>{" "}
+                  untuk mengelola folder & obrolan
                 </p>
               </div>
             </div>
@@ -605,15 +635,15 @@ const fetchPromptDataset = async (offset: number = 0, length: number = 100) => {
     const response = await fetch(
       `https://datasets-server.huggingface.co/rows?dataset=fka%2Fawesome-chatgpt-prompts&config=default&split=train&offset=${offset}&length=${length}`
     );
-    
+
     if (!response.ok) {
-      throw new Error('Failed to fetch dataset');
+      throw new Error("Failed to fetch dataset");
     }
-    
+
     const data: DatasetResponse = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching dataset:', error);
+    console.error("Error fetching dataset:", error);
     throw error;
   }
 };
@@ -669,7 +699,7 @@ export function DashboardComponent() {
         // Use smooth scroll behavior
         lastMessage.scrollIntoView({
           behavior: force ? "auto" : "smooth",
-          block: "end"
+          block: "end",
         });
       }
     }
@@ -737,7 +767,7 @@ export function DashboardComponent() {
           const scrollHeight = mainContentRef.current.scrollHeight;
           mainContentRef.current.scrollTo({
             top: scrollHeight,
-            behavior: "smooth"
+            behavior: "smooth",
           });
         }
       }, 100);
@@ -798,14 +828,17 @@ export function DashboardComponent() {
                 if (!container) return;
 
                 // Cek apakah user sudah scroll up
-                const isNearBottom = 
-                  container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                const isNearBottom =
+                  container.scrollHeight -
+                    container.scrollTop -
+                    container.clientHeight <
+                  100;
 
                 // Hanya scroll jika user berada di dekat bottom
                 if (isNearBottom) {
-                  lastMessageRef.current.scrollIntoView({ 
+                  lastMessageRef.current.scrollIntoView({
                     behavior: "smooth",
-                    block: "end"
+                    block: "end",
                   });
                 }
               }
@@ -1134,7 +1167,7 @@ export function DashboardComponent() {
       const data = await fetchPromptDataset();
       setPrompts(data.rows);
     } catch (error) {
-      console.error('Error loading prompts:', error);
+      console.error("Error loading prompts:", error);
     } finally {
       setIsLoadingPrompts(false);
     }
@@ -1156,36 +1189,17 @@ export function DashboardComponent() {
       setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Optimasi input handling untuk mobile
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInputMessage(value);
-
-    // Optimize textarea height adjustment for mobile
-    if (isMobile) {
-      // Clear existing timeout
-      if (inputTimeoutRef.current) {
-        clearTimeout(inputTimeoutRef.current);
-      }
-
-      // Debounce height adjustment
-      inputTimeoutRef.current = setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.style.height = 'inherit';
-          const newHeight = Math.min(inputRef.current.scrollHeight, 200);
-          inputRef.current.style.height = `${newHeight}px`;
-        }
-      }, 100);
-    } else {
-      // Desktop behavior remains the same
-      e.target.style.height = 'inherit';
-      e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-    }
-  }, [isMobile]);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInputMessage(e.target.value);
+    },
+    []
+  );
 
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -1246,8 +1260,10 @@ export function DashboardComponent() {
                   className="flex-1 justify-start h-10 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/30 transition-all duration-300"
                   onClick={createNewGroup}
                 >
-                  <FolderPlus className="mr-2 h-5 w-5" /> 
-                  <span className="text-[15px] font-medium">Membuat Folder Baru</span>
+                  <FolderPlus className="mr-2 h-5 w-5" />
+                  <span className="text-[15px] font-medium">
+                    Membuat Folder Baru
+                  </span>
                 </Button>
                 {groups.length > 0 && (
                   <Button
@@ -1306,7 +1322,7 @@ export function DashboardComponent() {
                               value={newName}
                               onChange={(e) => setNewName(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
                                   saveNewName();
                                 }
@@ -1379,7 +1395,11 @@ export function DashboardComponent() {
                             }}
                           >
                             <div className="flex items-center w-full justify-center gap-2">
-                              <span className={`${chatTypes[chat.type]?.color} transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}>
+                              <span
+                                className={`${
+                                  chatTypes[chat.type]?.color
+                                } transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}
+                              >
                                 {chatTypes[chat.type]?.icon}
                               </span>
                               {renamingChatId === chat.id ? (
@@ -1388,7 +1408,7 @@ export function DashboardComponent() {
                                   value={newName}
                                   onChange={(e) => setNewName(e.target.value)}
                                   onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
+                                    if (e.key === "Enter") {
                                       e.preventDefault();
                                       saveNewName();
                                     }
@@ -1542,17 +1562,22 @@ export function DashboardComponent() {
                           </Avatar>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className={`relative px-3 sm:p-5.5 rounded-lg ${
-                            message.role === "user" 
-                              ? "text-gray-800 dark:text-white"
-                              : "bg-card dark:bg-secondary/25 border border-border/40 dark:border-border/30 shadow-sm"
-                          }`}>
+                          <div
+                            className={`relative px-3 sm:p-5.5 rounded-lg ${
+                              message.role === "user"
+                                ? "text-gray-800 dark:text-white"
+                                : "bg-card dark:bg-secondary/25 border border-border/40 dark:border-border/30 shadow-sm"
+                            }`}
+                          >
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               className="markdown-content"
                               components={{
                                 p: ({ node, ...props }) => (
-                                  <p {...props} className="mb-2 last:mb-0 text-[19px] sm:text-[15px]" />
+                                  <p
+                                    {...props}
+                                    className="mb-2 last:mb-0 text-[19px] sm:text-[15px]"
+                                  />
                                 ),
                                 // ... other components
                               }}
@@ -1590,7 +1615,9 @@ export function DashboardComponent() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[300px]">
                     <div className="p-2">
-                      <div className="text-sm font-medium mb-2">Quick Prompts</div>
+                      <div className="text-sm font-medium mb-2">
+                        Quick Prompts
+                      </div>
                       <ScrollArea className="h-[300px]">
                         {prompts.map((item) => (
                           <div
@@ -1600,7 +1627,9 @@ export function DashboardComponent() {
                               setInputMessage(item.row.prompt);
                             }}
                           >
-                            <div className="font-medium text-xs">{item.row.act}</div>
+                            <div className="font-medium text-xs">
+                              {item.row.act}
+                            </div>
                             <div className="text-xs text-muted-foreground line-clamp-2">
                               {item.row.prompt}
                             </div>
@@ -1619,18 +1648,15 @@ export function DashboardComponent() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      if (!isMobile || inputMessage.trim()) {
+                      if (inputMessage.trim()) {
                         handleSendMessage();
                       }
                     }
                   }}
-                  className={`flex-1 min-h-[36px] sm:min-h-[44px] max-h-[36px] sm:max-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg overflow-hidden ${
-                    isMobile ? 'mobile-input' : ''
-                  }`}
+                  className="flex-1 min-h-[36px] sm:min-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg"
                   style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    maxHeight: "100px",
+                    overflow: "auto",
                   }}
                   rows={1}
                 />
@@ -1669,7 +1695,7 @@ export function DashboardComponent() {
                 maxWidth={800}
                 enable={{ left: true }}
                 handleClasses={{
-                  left: "w-1 hover:w-1.5 -ml-0.5 h-full cursor-col-resize transition-all duration-200 bg-primary/30 hover:bg-primary/50 rounded-full absolute left-0 top-0"
+                  left: "w-1 hover:w-1.5 -ml-0.5 h-full cursor-col-resize transition-all duration-200 bg-primary/30 hover:bg-primary/50 rounded-full absolute left-0 top-0",
                 }}
               >
                 <div className="h-full flex flex-col bg-gradient-to-b from-card/50 to-background/50 relative">
@@ -1678,8 +1704,8 @@ export function DashboardComponent() {
                     <div className="flex-1 pr-10">
                       <Tabs defaultValue="code" className="w-full">
                         <TabsList className="w-full bg-background/40 backdrop-blur p-1 rounded-lg border border-border/30">
-                          <TabsTrigger 
-                            value="code" 
+                          <TabsTrigger
+                            value="code"
                             className="flex-1 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md transition-all duration-200"
                             style={{ width: `${previewWidth / 2 - 24}px` }}
                           >
@@ -1688,8 +1714,8 @@ export function DashboardComponent() {
                               <span className="truncate">Code</span>
                             </div>
                           </TabsTrigger>
-                          <TabsTrigger 
-                            value="preview" 
+                          <TabsTrigger
+                            value="preview"
                             className="flex-1 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md transition-all duration-200"
                             style={{ width: `${previewWidth / 2 - 24}px` }}
                           >
@@ -1701,8 +1727,8 @@ export function DashboardComponent() {
                         </TabsList>
 
                         {/* Code Tab Content */}
-                        <TabsContent 
-                          value="code" 
+                        <TabsContent
+                          value="code"
                           className="h-[calc(100vh-6rem)] mt-4"
                           style={{ width: `${previewWidth - 24}px` }}
                         >
@@ -1727,9 +1753,12 @@ export function DashboardComponent() {
                                     >
                                       <FileCode2 className="h-3.5 w-3.5 mr-2 text-primary/70" />
                                       <span className="text-sm font-medium">
-                                        {supportedLanguages.find(
-                                          (lang) => lang.id === currentLanguage
-                                        )?.name}
+                                        {
+                                          supportedLanguages.find(
+                                            (lang) =>
+                                              lang.id === currentLanguage
+                                          )?.name
+                                        }
                                       </span>
                                       <ChevronDown className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
                                     </Button>
@@ -1741,14 +1770,22 @@ export function DashboardComponent() {
                                     {supportedLanguages.map((lang) => (
                                       <DropdownMenuItem
                                         key={lang.id}
-                                        onSelect={() => setCurrentLanguage(lang.id)}
+                                        onSelect={() =>
+                                          setCurrentLanguage(lang.id)
+                                        }
                                         className="text-sm py-2 cursor-pointer transition-colors hover:bg-primary/5 hover:text-primary focus:bg-primary/5 focus:text-primary"
                                       >
                                         <span className="flex items-center">
                                           {lang.id === currentLanguage && (
                                             <Check className="h-3.5 w-3.5 mr-2 text-primary" />
                                           )}
-                                          <span className={lang.id === currentLanguage ? "text-primary" : ""}>
+                                          <span
+                                            className={
+                                              lang.id === currentLanguage
+                                                ? "text-primary"
+                                                : ""
+                                            }
+                                          >
                                             {lang.name}
                                           </span>
                                         </span>
@@ -1803,7 +1840,9 @@ export function DashboardComponent() {
                               <MonacoEditor
                                 height="100%"
                                 language={currentLanguage}
-                                theme={theme === "dark" ? "vs-dark" : "vs-light"}
+                                theme={
+                                  theme === "dark" ? "vs-dark" : "vs-light"
+                                }
                                 value={isEditing ? editedCode : codeContent}
                                 onChange={handleCodeChange}
                                 options={{
@@ -1829,8 +1868,8 @@ export function DashboardComponent() {
                         </TabsContent>
 
                         {/* Preview Tab Content */}
-                        <TabsContent 
-                          value="preview" 
+                        <TabsContent
+                          value="preview"
                           className="h-[calc(100vh-6rem)] mt-4"
                           style={{ width: `${previewWidth - 24}px` }}
                         >
@@ -1841,14 +1880,17 @@ export function DashboardComponent() {
                                 Preview Output
                               </h3>
                               <span className="text-xs text-muted-foreground bg-background/50 px-2 py-1 rounded-md border border-border/30">
-                                {supportedLanguages.find(
-                                  (lang) => lang.id === currentLanguage
-                                )?.name}
+                                {
+                                  supportedLanguages.find(
+                                    (lang) => lang.id === currentLanguage
+                                  )?.name
+                                }
                               </span>
                             </div>
 
                             <div className="p-4 h-[calc(100%-3rem)] overflow-auto">
-                              {currentLanguage === "html" || currentLanguage === "css" ? (
+                              {currentLanguage === "html" ||
+                              currentLanguage === "css" ? (
                                 <div className="h-full w-full bg-background rounded-lg border border-border/30 overflow-hidden">
                                   <iframe
                                     srcDoc={`
@@ -1856,11 +1898,19 @@ export function DashboardComponent() {
                                         <head>
                                           <style>
                                             body { margin: 0; padding: 16px; }
-                                            ${currentLanguage === "css" ? codeContent : ""}
+                                            ${
+                                              currentLanguage === "css"
+                                                ? codeContent
+                                                : ""
+                                            }
                                           </style>
                                         </head>
                                         <body>
-                                          ${currentLanguage === "html" ? codeContent : ""}
+                                          ${
+                                            currentLanguage === "html"
+                                              ? codeContent
+                                              : ""
+                                          }
                                         </body>
                                       </html>
                                     `}
@@ -1877,13 +1927,18 @@ export function DashboardComponent() {
                                 </div>
                               ) : currentLanguage === "svg" ? (
                                 <div className="flex items-center justify-center h-full bg-background/50 rounded-lg border border-border/30 p-4">
-                                  <div dangerouslySetInnerHTML={{ __html: codeContent }} />
+                                  <div
+                                    dangerouslySetInnerHTML={{
+                                      __html: codeContent,
+                                    }}
+                                  />
                                 </div>
                               ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                                   <Binary className="h-12 w-12 text-primary/20" />
                                   <p className="text-sm">
-                                    Preview not available for {currentLanguage} code
+                                    Preview not available for {currentLanguage}{" "}
+                                    code
                                   </p>
                                 </div>
                               )}
