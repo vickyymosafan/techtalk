@@ -77,7 +77,7 @@ export default function Component() {
               >
                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
                   <img 
-                    src="/images/logos/techtalk-black.png"
+                    src="/images/logos/techtalk-white.png"
                     alt="Techtalk Logo" 
                     className="w-10 h-10"
                   />
