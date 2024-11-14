@@ -502,6 +502,33 @@ const styles = `
     transition: width 0.2s ease-in-out;
     min-width: 100px;
   }
+
+  /* Mobile input optimizations */
+  .mobile-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+    will-change: height;
+  }
+
+  @media (max-width: 768px) {
+    .input-area {
+      position: sticky;
+      bottom: 0;
+      background: hsl(var(--background));
+      z-index: 40;
+    }
+
+    .mobile-input:focus {
+      outline: none;
+      box-shadow: none;
+    }
+  }
 `;
 
 // Update fungsi copyToClipboard
@@ -1096,6 +1123,48 @@ export function DashboardComponent() {
     loadPrompts();
   }, []);
 
+  // Tambahkan state untuk mobile input
+  const [isMobile, setIsMobile] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Deteksi mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Optimasi input handling untuk mobile
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setInputMessage(value);
+
+    // Optimize textarea height adjustment for mobile
+    if (isMobile) {
+      // Clear existing timeout
+      if (inputTimeoutRef.current) {
+        clearTimeout(inputTimeoutRef.current);
+      }
+
+      // Debounce height adjustment
+      inputTimeoutRef.current = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.style.height = 'inherit';
+          const newHeight = Math.min(inputRef.current.scrollHeight, 200);
+          inputRef.current.style.height = `${newHeight}px`;
+        }
+      }, 100);
+    } else {
+      // Desktop behavior remains the same
+      e.target.style.height = 'inherit';
+      e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+    }
+  }, [isMobile]);
+
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
       <div className="flex vh-fix overflow-hidden bg-background text-foreground">
@@ -1277,14 +1346,15 @@ export function DashboardComponent() {
                                 ? "bg-primary/5 dark:bg-primary/10"
                                 : ""
                             }`}
-                            onClick={() =>
+                            onClick={() => {
                               setCurrentChat({
                                 ...chatTypes[chat.type],
                                 id: chat.id,
                                 name: chat.name,
                                 createdAt: chat.createdAt,
-                              })
-                            }
+                              });
+                              setIsSidebarOpen(false);
+                            }}
                           >
                             <div className="flex items-center w-full justify-center gap-2">
                               <span className={`${chatTypes[chat.type]?.color} transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}>
@@ -1520,25 +1590,25 @@ export function DashboardComponent() {
                 </DropdownMenu>
 
                 <Textarea
+                  ref={inputRef}
                   placeholder="Type your message..."
                   value={inputMessage}
-                  onChange={(e) => {
-                    setInputMessage(e.target.value);
-                    e.target.style.height = "inherit";
-                    e.target.style.height = `${Math.min(
-                      e.target.scrollHeight,
-                      200
-                    )}px`;
-                  }}
+                  onChange={handleInputChange}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      handleSendMessage();
+                      if (!isMobile || inputMessage.trim()) {
+                        handleSendMessage();
+                      }
                     }
                   }}
-                  className="flex-1 min-h-[36px] sm:min-h-[44px] max-h-[200px] resize-none py-1.5 sm:py-2 text-sm transition-all duration-200 rounded-lg"
+                  className={`flex-1 min-h-[36px] sm:min-h-[44px] max-h-[36px] sm:max-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg overflow-hidden ${
+                    isMobile ? 'mobile-input' : ''
+                  }`}
                   style={{
-                    overflow: "hidden",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}
                   rows={1}
                 />
