@@ -550,13 +550,44 @@ export function DashboardComponent() {
   const [modelLoaded, setModelLoaded] = useState(false);
   const modelLoadTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Move loadModel function before handleSendMessage
+  // Add new state for hardware acceleration
+  const [hasGPU, setHasGPU] = useState(false);
+
+  // Add function to check for GPU availability 
+  const checkGPUAvailability = useCallback(async () => {
+    try {
+      // Check if WebGL is available as a proxy for GPU support
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      setHasGPU(!!gl);
+    } catch (error) {
+      console.error('Error checking GPU availability:', error);
+      setHasGPU(false);
+    }
+  }, []);
+
+  // Update loadModel function
   const loadModel = useCallback(async () => {
     if (!modelLoaded) {
       try {
         setIsLoading(true);
-        // Simulate model loading - replace with actual model loading logic
+        
+        // Check GPU availability before loading
+        await checkGPUAvailability();
+        
+        // Configure model to use GPU if available
+        const modelConfig = {
+          useGPU: hasGPU,
+          // Add other acceleration options based on environment
+          useTensorflowJS: true,
+          useWebGL: hasGPU,
+          useWASM: !hasGPU // Fallback to WASM if no GPU
+        };
+
+        // Load model with hardware acceleration config
+        // Replace with actual model loading logic
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
         setModelLoaded(true);
       } catch (error) {
         console.error('Error loading model:', error);
@@ -564,7 +595,12 @@ export function DashboardComponent() {
         setIsLoading(false);
       }
     }
-  }, [modelLoaded]);
+  }, [modelLoaded, hasGPU, checkGPUAvailability]);
+
+  // Add effect to check GPU on mount
+  useEffect(() => {
+    checkGPUAvailability();
+  }, [checkGPUAvailability]);
 
   // Update handleSendMessage to detect code blocks
   const handleSendMessage = useCallback(async () => {
