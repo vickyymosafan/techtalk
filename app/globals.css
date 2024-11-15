@@ -372,3 +372,8 @@ body {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }
+
+@keyframes bounce-transform {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-25%); }
+}

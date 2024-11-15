@@ -1283,7 +1283,7 @@ export function DashboardComponent() {
             <div className="p-3 space-y-2 bg-gradient-to-b from-secondary/20 to-transparent">
               <div className="flex gap-1.5">
                 <Button
-                  className="flex-1 justify-start h-10 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/30 transition-all duration-300"
+                  className="flex-1 justify-start h-10 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/30 transition-transform duration-300 hover:scale-[1.02]"
                   onClick={createNewGroup}
                 >
                   <FolderPlus className="mr-2 h-5 w-5" />
@@ -1553,9 +1553,9 @@ export function DashboardComponent() {
                   {isLoading && (
                     <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50">
                       <div className="bg-primary/90 text-primary-foreground px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg">
-                        <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_-0.3s_infinite]"></div>
+                        <div className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_-0.15s_infinite]"></div>
+                        <div className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_infinite]"></div>
                         <span className="ml-1">
                           AI is typing, please wait...
                         </span>
@@ -1703,9 +1703,9 @@ export function DashboardComponent() {
         <AnimatePresence>
           {codeContent && isPreviewOpen && (
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: previewWidth }}
-              exit={{ width: 0 }}
+              initial={{ transform: 'scaleX(0)', transformOrigin: 'right' }}
+              animate={{ transform: 'scaleX(1)' }}
+              exit={{ transform: 'scaleX(0)' }}
               transition={{ duration: 0.2, ease: "easeInOut" }}
               className="hidden md:block h-[100dvh] overflow-hidden border-l border-border/30 bg-gradient-to-b from-background to-background/95 backdrop-blur-sm"
               style={{ width: previewWidth }}
