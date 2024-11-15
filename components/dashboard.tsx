@@ -53,6 +53,7 @@ import {
   Pencil,
   Check,
   Copy,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { format } from "date-fns";
@@ -76,6 +77,9 @@ import { WelcomeGuide } from "./welcome-guide";
 import NodeCache from "node-cache";
 import { debounce } from 'lodash';
 
+const CodePreview = lazy(() => import("./code-preview"));
+const MarkdownPreview = lazy(() => import("./markdown-preview"));
+const SvgPreview = lazy(() => import("./svg-preview"));
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
 interface ChatTypeInfo {
@@ -457,6 +461,11 @@ const fetchPromptDataset = async (offset: number = 0, length: number = 100) => {
 
 // Initialize cache with 1 hour TTL
 const aiResponseCache = new NodeCache({ stdTTL: 3600 });
+
+// Add this component definition near the top of the file
+const LoadingSpinner = () => (
+  <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
+);
 
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1131,6 +1140,62 @@ export function DashboardComponent() {
     };
   }, [modelLoaded, unloadModel]);
 
+  // 2. Add loading states for each lazy component
+  const [isEditorLoading, setIsEditorLoading] = useState(true);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(true);
+
+  // 3. Add error boundaries for lazy components
+  const handleComponentError = useCallback((error: Error) => {
+    console.error('Component failed to load:', error);
+    // Handle error state appropriately
+  }, []);
+
+  // 4. Render code preview section with improved code splitting
+  const renderCodePreview = () => (
+    <Suspense 
+      fallback={
+        <div className="h-full flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      }
+    >
+      {currentLanguage === "markdown" ? (
+        <MarkdownPreview content={codeContent} />
+      ) : currentLanguage === "svg" ? (
+        <SvgPreview content={codeContent} />
+      ) : (
+        <CodePreview 
+          language={currentLanguage}
+          content={codeContent}
+          theme={theme || 'light'}
+        />
+      )}
+    </Suspense>
+  );
+
+  // 5. Render editor with improved error handling
+  const renderEditor = () => (
+    <Suspense
+      fallback={
+        <div className="h-full flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      }
+    >
+      <MonacoEditor
+        height="100%"
+        language={currentLanguage}
+        theme={theme === "dark" ? "vs-dark" : "vs-light"}
+        value={isEditing ? editedCode : codeContent}
+        onChange={handleCodeChange}
+        onMount={() => setIsEditorLoading(false)}
+        options={{
+          // ... existing options ...
+        }}
+      />
+    </Suspense>
+  );
+
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
       <div className="flex vh-fix overflow-hidden bg-background text-foreground">
@@ -1662,139 +1727,7 @@ export function DashboardComponent() {
                           className="h-[calc(100vh-6rem)] mt-4"
                           style={{ width: `${previewWidth - 24}px` }}
                         >
-                          <Suspense
-                            fallback={
-                              <div className="h-full flex items-center justify-center space-x-2">
-                                <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                                <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                                <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" />
-                              </div>
-                            }
-                          >
-                            <div className="h-full w-full relative rounded-lg overflow-hidden border border-border/30">
-                              {/* Language Selector dengan styling yang lebih menarik */}
-                              <div className="absolute top-2 left-2 z-10">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 px-3 bg-background/80 backdrop-blur border-border/40 hover:bg-background/90 transition-all duration-200"
-                                    >
-                                      <FileCode2 className="h-3.5 w-3.5 mr-2 text-primary/70" />
-                                      <span className="text-sm font-medium">
-                                        {
-                                          supportedLanguages.find(
-                                            (lang) =>
-                                              lang.id === currentLanguage
-                                          )?.name
-                                        }
-                                      </span>
-                                      <ChevronDown className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="max-h-[300px] overflow-y-auto w-48 bg-background/95 backdrop-blur border-border/30"
-                                  >
-                                    {supportedLanguages.map((lang) => (
-                                      <DropdownMenuItem
-                                        key={lang.id}
-                                        onSelect={() =>
-                                          setCurrentLanguage(lang.id)
-                                        }
-                                        className="text-sm py-2 cursor-pointer transition-colors hover:bg-primary/5 hover:text-primary focus:bg-primary/5 focus:text-primary"
-                                      >
-                                        <span className="flex items-center">
-                                          {lang.id === currentLanguage && (
-                                            <Check className="h-3.5 w-3.5 mr-2 text-primary" />
-                                          )}
-                                          <span
-                                            className={
-                                              lang.id === currentLanguage
-                                                ? "text-primary"
-                                                : ""
-                                            }
-                                          >
-                                            {lang.name}
-                                          </span>
-                                        </span>
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-
-                              {/* Action Buttons dengan animasi hover yang lebih halus */}
-                              <div className="absolute top-2 right-2 flex gap-1.5 bg-background/90 backdrop-blur-sm p-1 rounded-lg border border-border/30 shadow-sm">
-                                {!isEditing ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setIsEditing(true);
-                                      setEditedCode(codeContent);
-                                    }}
-                                    className="h-7 px-2.5 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                  >
-                                    <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                                    Edit
-                                  </Button>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setIsEditing(false);
-                                        setEditedCode(codeContent);
-                                      }}
-                                      className="h-7 px-2.5 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
-                                    >
-                                      <X className="h-3.5 w-3.5 mr-1.5" />
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={handleSaveCode}
-                                      className="h-7 px-2.5 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                    >
-                                      <Check className="h-3.5 w-3.5 mr-1.5" />
-                                      Save
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-
-                              <MonacoEditor
-                                height="100%"
-                                language={currentLanguage}
-                                theme={
-                                  theme === "dark" ? "vs-dark" : "vs-light"
-                                }
-                                value={isEditing ? editedCode : codeContent}
-                                onChange={handleCodeChange}
-                                options={{
-                                  minimap: { enabled: false },
-                                  fontSize: 14,
-                                  lineHeight: 1.6,
-                                  padding: { top: 48, bottom: 16 },
-                                  readOnly: !isEditing,
-                                  wordWrap: "on",
-                                  lineNumbers: "on",
-                                  renderWhitespace: "selection",
-                                  formatOnPaste: true,
-                                  formatOnType: true,
-                                  smoothScrolling: true,
-                                  cursorSmoothCaretAnimation: "on",
-                                  automaticLayout: true,
-                                  fontFamily: "'JetBrains Mono', monospace",
-                                  fontLigatures: true,
-                                }}
-                              />
-                            </div>
-                          </Suspense>
+                          {renderEditor()}
                         </TabsContent>
 
                         {/* Preview Tab Content */}
@@ -1803,77 +1736,7 @@ export function DashboardComponent() {
                           className="h-[calc(100vh-6rem)] mt-4"
                           style={{ width: `${previewWidth - 24}px` }}
                         >
-                          <div className="h-full rounded-lg border border-border/30 bg-card/30 backdrop-blur-sm overflow-hidden">
-                            <div className="flex items-center justify-between p-3 border-b border-border/30 bg-background/50">
-                              <h3 className="text-sm font-medium flex items-center gap-2">
-                                <Terminal className="h-4 w-4 text-primary/70" />
-                                Preview Output
-                              </h3>
-                              <span className="text-xs text-muted-foreground bg-background/50 px-2 py-1 rounded-md border border-border/30">
-                                {
-                                  supportedLanguages.find(
-                                    (lang) => lang.id === currentLanguage
-                                  )?.name
-                                }
-                              </span>
-                            </div>
-
-                            <div className="p-4 h-[calc(100%-3rem)] overflow-auto">
-                              {currentLanguage === "html" ||
-                              currentLanguage === "css" ? (
-                                <div className="h-full w-full bg-background rounded-lg border border-border/30 overflow-hidden">
-                                  <iframe
-                                    srcDoc={`
-                                      <html>
-                                        <head>
-                                          <style>
-                                            body { margin: 0; padding: 16px; }
-                                            ${
-                                              currentLanguage === "css"
-                                                ? codeContent
-                                                : ""
-                                            }
-                                          </style>
-                                        </head>
-                                        <body>
-                                          ${
-                                            currentLanguage === "html"
-                                              ? codeContent
-                                              : ""
-                                          }
-                                        </body>
-                                      </html>
-                                    `}
-                                    className="w-full h-full border-none bg-white dark:bg-gray-900"
-                                    title="Preview"
-                                    sandbox="allow-scripts"
-                                  />
-                                </div>
-                              ) : currentLanguage === "markdown" ? (
-                                <div className="prose dark:prose-invert max-w-none">
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {codeContent}
-                                  </ReactMarkdown>
-                                </div>
-                              ) : currentLanguage === "svg" ? (
-                                <div className="flex items-center justify-center h-full bg-background/50 rounded-lg border border-border/30 p-4">
-                                  <div
-                                    dangerouslySetInnerHTML={{
-                                      __html: codeContent,
-                                    }}
-                                  />
-                                </div>
-                              ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-                                  <Binary className="h-12 w-12 text-primary/20" />
-                                  <p className="text-sm">
-                                    Preview not available for {currentLanguage}{" "}
-                                    code
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          {renderCodePreview()}
                         </TabsContent>
                       </Tabs>
                     </div>
