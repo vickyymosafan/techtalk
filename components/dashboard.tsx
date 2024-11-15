@@ -76,11 +76,42 @@ import { useAuth } from "@/contexts/auth-context";
 import { WelcomeGuide } from "./welcome-guide";
 import NodeCache from "node-cache";
 import { debounce } from 'lodash';
+import dynamic from 'next/dynamic';
 
-const CodePreview = lazy(() => import("./code-preview"));
-const MarkdownPreview = lazy(() => import("./markdown-preview"));
-const SvgPreview = lazy(() => import("./svg-preview"));
-const MonacoEditor = lazy(() => import("@monaco-editor/react"));
+const CodePreview = dynamic(() => import("./code-preview"), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  ),
+  ssr: false // Disable SSR for code preview
+});
+
+const MarkdownPreview = dynamic(() => import("./markdown-preview"), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  )
+});
+
+const SvgPreview = dynamic(() => import("./svg-preview"), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  ),
+  ssr: false // Disable SSR for SVG preview
+});
+
+const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  ),
+  ssr: false // Disable SSR for Monaco editor
+});
 
 interface ChatTypeInfo {
   id: string;
