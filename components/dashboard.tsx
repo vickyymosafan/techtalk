@@ -74,6 +74,7 @@ import type {
 import { useAuth } from "@/contexts/auth-context";
 import { WelcomeGuide } from "./welcome-guide";
 import NodeCache from "node-cache";
+import { debounce } from 'lodash';
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
@@ -545,8 +546,40 @@ export function DashboardComponent() {
     }
   }, [codeContent]);
 
+  // Add these new states in DashboardComponent
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const modelLoadTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Move loadModel function before handleSendMessage
+  const loadModel = useCallback(async () => {
+    if (!modelLoaded) {
+      try {
+        setIsLoading(true);
+        // Simulate model loading - replace with actual model loading logic
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setModelLoaded(true);
+      } catch (error) {
+        console.error('Error loading model:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [modelLoaded]);
+
   // Update handleSendMessage to detect code blocks
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
+    if (!modelLoaded) {
+      await loadModel();
+    }
+    
+    // Reset unload timer
+    if (modelLoadTimeoutRef.current) {
+      clearTimeout(modelLoadTimeoutRef.current);
+    }
+    modelLoadTimeoutRef.current = setTimeout(() => {
+      unloadModel();
+    }, 300000);
+
     if (inputMessage.trim() && currentChat) {
       const count = extractRequestedCount(inputMessage);
       setRequestedCount(count);
@@ -698,7 +731,7 @@ export function DashboardComponent() {
         }
       );
     }
-  }, [inputMessage, currentChat, messages, scrollToBottom]);
+  }, [inputMessage, currentChat, messages, modelLoaded, loadModel]);
 
   // Add useEffect to handle initial scroll
   useEffect(() => {
@@ -1030,6 +1063,37 @@ export function DashboardComponent() {
     },
     []
   );
+
+  // Add unload function
+  const unloadModel = useCallback(() => {
+    setModelLoaded(false);
+    // Add any cleanup logic here
+  }, []);
+
+  // Add this effect to handle model lifecycle
+  useEffect(() => {
+    // Debounced unload function
+    const debouncedUnload = debounce(() => {
+      if (modelLoaded) {
+        unloadModel();
+      }
+    }, 300000); // Unload after 5 minutes of inactivity
+
+    // Clear previous timeout
+    if (modelLoadTimeoutRef.current) {
+      clearTimeout(modelLoadTimeoutRef.current);
+    }
+
+    // Set new timeout
+    modelLoadTimeoutRef.current = setTimeout(debouncedUnload, 300000);
+
+    return () => {
+      debouncedUnload.cancel();
+      if (modelLoadTimeoutRef.current) {
+        clearTimeout(modelLoadTimeoutRef.current);
+      }
+    };
+  }, [modelLoaded, unloadModel]);
 
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
