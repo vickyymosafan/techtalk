@@ -73,6 +73,7 @@ import type {
 } from "@/types/chat";
 import { useAuth } from "@/contexts/auth-context";
 import { WelcomeGuide } from "./welcome-guide";
+import NodeCache from "node-cache";
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
@@ -453,6 +454,9 @@ const fetchPromptDataset = async (offset: number = 0, length: number = 100) => {
   }
 };
 
+// Initialize cache with 1 hour TTL
+const aiResponseCache = new NodeCache({ stdTTL: 3600 });
+
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
@@ -548,6 +552,26 @@ export function DashboardComponent() {
       setRequestedCount(count);
       setCurrentCount(0);
 
+      // Generate cache key from input message
+      const cacheKey = `ai_response_${Buffer.from(inputMessage).toString('base64')}`;
+
+      // Check cache first
+      const cachedResponse = aiResponseCache.get(cacheKey);
+      if (cachedResponse) {
+        // Use cached response
+        setMessages((prev) => ({
+          ...prev,
+          [currentChat.id]: [
+            ...(prev[currentChat.id] || []),
+            { role: "user", content: inputMessage },
+            { role: "assistant", content: cachedResponse as string }
+          ]
+        }));
+        setInputMessage("");
+        scrollToBottom(true);
+        return;
+      }
+
       const updatedMessages: Message[] = [
         ...(messages[currentChat.id] || []),
         { role: "user" as const, content: inputMessage },
@@ -566,7 +590,7 @@ export function DashboardComponent() {
         textarea.style.height = "2.5rem";
       }
 
-      // Scroll ke pesan user dengan animasi smooth
+      // Scroll to user message with smooth animation
       setTimeout(() => {
         if (mainContentRef.current) {
           const scrollHeight = mainContentRef.current.scrollHeight;
@@ -593,6 +617,8 @@ export function DashboardComponent() {
       // Force scroll to bottom immediately when sending
       scrollToBottom(true);
 
+      let fullResponse = '';
+
       streamGroqResponse(
         [
           ...updatedMessages,
@@ -602,6 +628,7 @@ export function DashboardComponent() {
         ],
         {
           onToken: (token) => {
+            fullResponse += token;
             setMessages((prev) => {
               const prevContent =
                 prev[currentChat.id]?.slice(-1)[0]?.content || "";
@@ -626,20 +653,17 @@ export function DashboardComponent() {
               };
             });
 
-            // Gunakan requestAnimationFrame untuk scroll yang lebih smooth
             requestAnimationFrame(() => {
               if (lastMessageRef.current) {
                 const container = mainContentRef.current;
                 if (!container) return;
 
-                // Cek apakah user sudah scroll up
                 const isNearBottom =
                   container.scrollHeight -
                     container.scrollTop -
                     container.clientHeight <
                   100;
 
-                // Hanya scroll jika user berada di dekat bottom
                 if (isNearBottom) {
                   lastMessageRef.current.scrollIntoView({
                     behavior: "smooth",
@@ -651,7 +675,8 @@ export function DashboardComponent() {
           },
           onComplete: () => {
             setIsLoading(false);
-            // Final scroll dengan force enabled
+            // Cache the complete response
+            aiResponseCache.set(cacheKey, fullResponse);
             scrollToBottom(true);
           },
           onError: (error) => {

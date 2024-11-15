@@ -99,7 +99,7 @@ export function WelcomeGuide({ onCreateGroup }: WelcomeGuideProps) {
                   className="w-full bg-primary/90 hover:bg-primary text-primary-foreground h-9 sm:h-10 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300"
                 >
                   <FolderPlus className="mr-2 h-4 w-4" />
-                  Buat Folder Sekarang
+                  KLIK DISINI
                 </Button>
               </div>
             </div>
