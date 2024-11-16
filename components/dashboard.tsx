@@ -1227,8 +1227,33 @@ export function DashboardComponent() {
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInputMessage(e.target.value);
+      
+      // Auto-resize textarea
+      if (inputRef.current) {
+        inputRef.current.style.height = 'inherit';
+        inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+      }
     },
     []
+  );
+
+  // Tambahkan handleKeyDown untuk menangani input keyboard
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Jika Shift+Enter, biarkan default behavior (new line)
+      if (e.key === 'Enter' && e.shiftKey) {
+        return;
+      }
+      
+      // Jika Enter tanpa Shift, kirim pesan
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (inputMessage.trim()) {
+          handleSendMessage();
+        }
+      }
+    },
+    [inputMessage, handleSendMessage]
   );
 
   // Add unload function
@@ -1827,18 +1852,12 @@ export function DashboardComponent() {
                   placeholder="Type your message..."
                   value={inputMessage}
                   onChange={handleInputChange}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      if (inputMessage.trim()) {
-                        handleSendMessage();
-                      }
-                    }
-                  }}
-                  className="flex-1 min-h-[36px] sm:min-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg"
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 min-h-[36px] sm:min-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg mobile-input"
                   style={{
-                    maxHeight: "100px",
-                    overflow: "auto",
+                    maxHeight: isMobile ? "120px" : "200px", // Batasi tinggi maksimum
+                    height: "auto", // Biarkan tinggi menyesuaikan konten
+                    overflowY: "auto",
                   }}
                   rows={1}
                 />
