@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Cookies from 'js-cookie'
+import { jwtDecode } from 'jwt-decode'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -20,27 +20,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check authentication status on mount
   useEffect(() => {
-    const token = Cookies.get('auth-token')
+    const token = localStorage.getItem('auth-token')
     if (token) {
-      setIsAuthenticated(true)
-      // Optionally fetch user data here
+      try {
+        const decoded = jwtDecode(token)
+        // Check if token is expired
+        const currentTime = Date.now() / 1000
+        if (decoded.exp && decoded.exp > currentTime) {
+          setUser(decoded)
+          setIsAuthenticated(true)
+        } else {
+          // Token expired
+          localStorage.removeItem('auth-token')
+        }
+      } catch (error) {
+        // Invalid token
+        localStorage.removeItem('auth-token')
+      }
     }
   }, [])
 
   const login = async (username: string, password: string) => {
     try {
-      // Use environment variables for credentials
-      const validUsername = process.env.NEXT_PUBLIC_USERNAME;
-      const validPassword = process.env.NEXT_PUBLIC_PASSWORD;
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
 
-      if (username === validUsername && password === validPassword) {
-        // Set authentication cookie
-        Cookies.set('auth-token', 'your-auth-token', { expires: 7 })
-        setIsAuthenticated(true)
-        setUser({ username })
-        return true
+      if (!response.ok) {
+        return false
       }
-      return false
+
+      const { token } = await response.json()
+      
+      // Store JWT in localStorage instead of cookies
+      localStorage.setItem('auth-token', token)
+
+      // Decode JWT to get user info
+      const decoded = jwtDecode(token)
+      setUser(decoded)
+      setIsAuthenticated(true)
+      return true
     } catch (error) {
       console.error('Login error:', error)
       return false
@@ -48,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
-    Cookies.remove('auth-token')
+    localStorage.removeItem('auth-token')
     setIsAuthenticated(false)
     setUser(null)
     router.push('/login')

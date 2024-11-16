@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { jwtVerify } from 'jose'
 
-export function middleware(request: NextRequest) {
-  const isAuthenticated = request.cookies.get('auth-token')
-  const isLoginPage = request.nextUrl.pathname === '/login'
+export async function middleware(request: NextRequest) {
+  // Since we can't access localStorage in middleware (it's server-side),
+  // we'll need to pass the token in the Authorization header for API requests
+  const authHeader = request.headers.get('Authorization')
+  const token = authHeader?.replace('Bearer ', '')
 
-  if (!isAuthenticated && !isLoginPage) {
+  if (!token) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  try {
+    await jwtVerify(
+      token,
+      new TextEncoder().encode(process.env.JWT_SECRET)
+    )
+    return NextResponse.next()
+  } catch {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
-
-  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/login']
-} 
+  matcher: ['/api/protected/:path*']
+}
