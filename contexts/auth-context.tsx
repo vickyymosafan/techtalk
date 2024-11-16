@@ -40,6 +40,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const refreshAccessToken = async () => {
+    const refreshToken = localStorage.getItem('refresh-token')
+    if (!refreshToken) return false
+
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      })
+
+      if (!response.ok) {
+        logout()
+        return false
+      }
+
+      const { accessToken } = await response.json()
+      localStorage.setItem('auth-token', accessToken)
+      return true
+    } catch (error) {
+      console.error('Token refresh error:', error)
+      logout()
+      return false
+    }
+  }
+
   const login = async (username: string, password: string) => {
     try {
       const response = await fetch('/api/auth/login', {
@@ -48,17 +74,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ username, password })
       })
 
-      if (!response.ok) {
-        return false
-      }
+      if (!response.ok) return false
 
-      const { token } = await response.json()
+      const { accessToken, refreshToken } = await response.json()
       
-      // Store JWT in localStorage instead of cookies
-      localStorage.setItem('auth-token', token)
+      localStorage.setItem('auth-token', accessToken)
+      localStorage.setItem('refresh-token', refreshToken)
 
-      // Decode JWT to get user info
-      const decoded = jwtDecode(token)
+      const decoded = jwtDecode(accessToken)
       setUser(decoded)
       setIsAuthenticated(true)
       return true
@@ -70,10 +93,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('auth-token')
+    localStorage.removeItem('refresh-token')
     setIsAuthenticated(false)
     setUser(null)
     router.push('/login')
   }
+
+  // Add auto refresh mechanism
+  useEffect(() => {
+    if (isAuthenticated) {
+      const checkTokenExpiry = async () => {
+        const token = localStorage.getItem('auth-token')
+        if (!token) return
+
+        try {
+          const decoded = jwtDecode(token)
+          const currentTime = Date.now() / 1000
+
+          // Refresh token 1 minute before expiry
+          if (decoded.exp && decoded.exp - currentTime < 60) {
+            await refreshAccessToken()
+          }
+        } catch (error) {
+          console.error('Token check error:', error)
+        }
+      }
+
+      // Check every minute
+      const interval = setInterval(checkTokenExpiry, 60000)
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated])
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>

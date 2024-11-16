@@ -79,7 +79,11 @@ export default function Component() {
                   <img 
                     src="/images/logos/techtalk-white.png"
                     alt="Techtalk Logo" 
-                    className="w-10 h-10"
+                    className="w-10 h-10 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/logos/fallback-logo.png'
+                      e.currentTarget.onerror = null
+                    }}
                   />
                 </div>
               </motion.div>

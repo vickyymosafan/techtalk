@@ -17,17 +17,24 @@ export async function POST(request: Request) {
     })
 
     if (username === validUsername && password === validPassword) {
-      // Buat token JWT
-      const token = jwt.sign(
-        { 
-          username,
-          // Tambahkan data user lainnya jika perlu
-        },
+      // Generate access token (short-lived)
+      const accessToken = jwt.sign(
+        { username, type: 'access' },
+        JWT_SECRET,
+        { expiresIn: '30m' } // 30 menit
+      )
+
+      // Generate refresh token (long-lived)
+      const refreshToken = jwt.sign(
+        { username, type: 'refresh' },
         JWT_SECRET,
         { expiresIn: '7d' }
       )
 
-      return NextResponse.json({ token })
+      return NextResponse.json({ 
+        accessToken,
+        refreshToken
+      })
     }
 
     return NextResponse.json(
