@@ -1227,33 +1227,8 @@ export function DashboardComponent() {
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInputMessage(e.target.value);
-      
-      // Auto-resize textarea
-      if (inputRef.current) {
-        inputRef.current.style.height = 'inherit';
-        inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
-      }
     },
     []
-  );
-
-  // Tambahkan handleKeyDown untuk menangani input keyboard
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Jika Shift+Enter, biarkan default behavior (new line)
-      if (e.key === 'Enter' && e.shiftKey) {
-        return;
-      }
-      
-      // Jika Enter tanpa Shift, kirim pesan
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (inputMessage.trim()) {
-          handleSendMessage();
-        }
-      }
-    },
-    [inputMessage, handleSendMessage]
   );
 
   // Add unload function
@@ -1691,25 +1666,31 @@ export function DashboardComponent() {
         {/* Main Content Area */}
         <section className="flex-1 flex flex-col vh-fix overflow-hidden">
           <header className="flex-none flex items-center justify-between p-2 sm:p-4 border-b">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="mr-2 sm:mr-4">
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight">
-                {currentChat?.name || ""}
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight">
+                  {currentChat?.name || ""}
+                </h1>
+                {/* Add Groq model label */}
+                <span className="text-xs text-muted-foreground">
+                  Powered by Vicky LLM
+                </span>
+              </div>
             </div>
 
-            {/* Tampilkan Trash button untuk mobile dan desktop */}
+            {/* Trash button */}
             {currentChat && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={clearChat}
                 title="Clear Chat"
-                className="md:flex" // Ubah dari hidden menjadi flex agar tampil di mobile
+                className="md:flex"
               >
                 <Trash className="h-4 w-4 text-red-600" />
               </Button>
@@ -1852,12 +1833,18 @@ export function DashboardComponent() {
                   placeholder="Type your message..."
                   value={inputMessage}
                   onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 min-h-[36px] sm:min-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg mobile-input"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      if (inputMessage.trim()) {
+                        handleSendMessage();
+                      }
+                    }
+                  }}
+                  className="flex-1 min-h-[36px] sm:min-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg"
                   style={{
-                    maxHeight: isMobile ? "120px" : "200px", // Batasi tinggi maksimum
-                    height: "auto", // Biarkan tinggi menyesuaikan konten
-                    overflowY: "auto",
+                    maxHeight: "100px",
+                    overflow: "auto",
                   }}
                   rows={1}
                 />
