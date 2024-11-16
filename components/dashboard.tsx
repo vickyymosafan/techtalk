@@ -495,7 +495,9 @@ const aiResponseCache = new NodeCache({ stdTTL: 3600 });
 
 // Add this component definition near the top of the file
 const LoadingSpinner = () => (
-  <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
+  <figure className="h-6 w-6 animate-spin text-primary/60">
+    <Loader2 />
+  </figure>
 );
 
 export function DashboardComponent() {
@@ -1185,21 +1187,27 @@ export function DashboardComponent() {
   const renderCodePreview = () => (
     <Suspense 
       fallback={
-        <div className="h-full flex items-center justify-center">
+        <figure className="h-full flex items-center justify-center">
           <LoadingSpinner />
-        </div>
+        </figure>
       }
     >
       {currentLanguage === "markdown" ? (
-        <MarkdownPreview content={codeContent} />
+        <article className="markdown-content">
+          <MarkdownPreview content={codeContent} />
+        </article>
       ) : currentLanguage === "svg" ? (
-        <SvgPreview content={codeContent} />
+        <figure className="svg-preview">
+          <SvgPreview content={codeContent} />
+        </figure>
       ) : (
-        <CodePreview 
-          language={currentLanguage}
-          content={codeContent}
-          theme={theme || 'light'}
-        />
+        <article className="code-preview">
+          <CodePreview 
+            language={currentLanguage}
+            content={codeContent}
+            theme={theme || 'light'}
+          />
+        </article>
       )}
     </Suspense>
   );
@@ -1229,16 +1237,16 @@ export function DashboardComponent() {
 
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-      <div className="flex vh-fix overflow-hidden bg-background text-foreground">
-        {/* Sidebar - Update width untuk mobile */}
+      <main className="flex vh-fix overflow-hidden bg-background text-foreground">
+        {/* Sidebar */}
         <SheetContent
           side="left"
           className="w-[280px] sm:w-[320px] p-0 h-[100dvh] overflow-hidden border-r border-border/40"
         >
-          <div className="flex flex-col h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <nav className="flex flex-col h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             {/* Header Section */}
-            <div className="border-b border-border/40 bg-secondary/20">
-              <div className="p-3 flex items-center space-x-2">
+            <header className="border-b border-border/40 bg-secondary/20">
+              <section className="p-3 flex items-center space-x-2">
                 <Avatar className="h-8 w-8 ring-2 ring-primary/10 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary/30">
                   <AvatarImage
                     src={
@@ -1276,11 +1284,11 @@ export function DashboardComponent() {
                     <LogOut className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              </div>
-            </div>
+              </section>
+            </header>
 
-            {/* Action Section dengan font yang lebih besar */}
-            <div className="p-3 space-y-2 bg-gradient-to-b from-secondary/20 to-transparent">
+            {/* Action Section */}
+            <section className="p-3 space-y-2 bg-gradient-to-b from-secondary/20 to-transparent">
               <div className="flex gap-1.5">
                 <Button
                   className="flex-1 justify-start h-10 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/30 transition-transform duration-300 hover:scale-[1.02]"
@@ -1303,18 +1311,18 @@ export function DashboardComponent() {
                   </Button>
                 )}
               </div>
-            </div>
+            </section>
 
             {/* Groups List */}
             <ScrollArea className="flex-1 px-2 pb-4">
-              <div className="space-y-2 mt-2">
+              <section className="space-y-2 mt-2">
                 {groups.map((group) => (
-                  <div
+                  <article
                     key={group.id}
                     className="rounded-lg overflow-hidden border border-border/40 bg-card/30 backdrop-blur-sm transition-all duration-300 hover:border-border/60"
                   >
-                    {/* Group Header dengan Dropdown Menu yang berfungsi */}
-                    <div className="relative">
+                    {/* Group Header */}
+                    <header className="relative">
                       <Button
                         variant="ghost"
                         className={`w-full h-auto px-2 py-2 hover:bg-secondary/40 text-left ${
@@ -1393,12 +1401,12 @@ export function DashboardComponent() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
+                    </header>
 
-                    {/* Chat Items dengan Dropdown untuk setiap chat */}
-                    <div className="p-2 space-y-1">
+                    {/* Chat Items */}
+                    <section className="p-2 space-y-1">
                       {group.chats.map((chat) => (
-                        <div key={chat.id} className="relative group">
+                        <article key={chat.id} className="relative group">
                           <Button
                             variant="ghost"
                             className={`w-full justify-center py-2 px-3 transition-all duration-200 ${
@@ -1479,11 +1487,11 @@ export function DashboardComponent() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </div>
+                        </article>
                       ))}
 
-                      {/* New Chat Button dengan font size yang lebih besar */}
-                      <div className="pt-2 mt-2 border-t border-border/40">
+                      {/* New Chat Button */}
+                      <footer className="pt-2 mt-2 border-t border-border/40">
                         <Button
                           variant="ghost"
                           className="w-full justify-start py-3 hover:bg-primary/5 dark:hover:bg-primary/10 group transition-all duration-300"
@@ -1501,21 +1509,21 @@ export function DashboardComponent() {
                             </div>
                           </div>
                         </Button>
-                      </div>
+                      </footer>
 
-                      <div className="px-2 py-2 text-sm text-muted-foreground/70 text-left">
+                      <time className="px-2 py-2 text-sm text-muted-foreground/70 text-left">
                         {format(group.createdAt, "MMM d, yyyy")}
-                      </div>
-                    </div>
-                  </div>
+                      </time>
+                    </section>
+                  </article>
                 ))}
-              </div>
+              </section>
             </ScrollArea>
-          </div>
+          </nav>
         </SheetContent>
 
-        {/* Main Content - Update padding dan spacing untuk mobile */}
-        <div className="flex-1 flex flex-col vh-fix overflow-hidden">
+        {/* Main Content Area */}
+        <section className="flex-1 flex flex-col vh-fix overflow-hidden">
           <header className="flex-none flex items-center justify-between p-2 sm:p-4 border-b">
             <div className="flex items-center">
               <SheetTrigger asChild>
@@ -1547,25 +1555,25 @@ export function DashboardComponent() {
             className="flex-1 p-2 sm:p-4 overflow-y-auto touch-scroll safe-area-padding overscroll-contain"
           >
             {currentChat ? (
-              <div className="max-w-[1200px] mx-auto flex flex-col items-center">
-                <div className="space-y-3 sm:space-y-4 w-full max-w-[100%] sm:max-w-3xl">
-                  {/* Update loading indicator position untuk mobile */}
+              <article className="max-w-[1200px] mx-auto flex flex-col items-center">
+                <section className="space-y-3 sm:space-y-4 w-full max-w-[100%] sm:max-w-3xl">
+                  {/* Loading Indicator */}
                   {isLoading && (
-                    <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50">
-                      <div className="bg-primary/90 text-primary-foreground px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg">
-                        <div className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_-0.3s_infinite]"></div>
-                        <div className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_-0.15s_infinite]"></div>
-                        <div className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_infinite]"></div>
-                        <span className="ml-1">
+                    <aside className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50">
+                      <figure className="bg-primary/90 text-primary-foreground px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg">
+                        <span className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_-0.3s_infinite]"></span>
+                        <span className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_-0.15s_infinite]"></span>
+                        <span className="w-2 h-2 bg-white rounded-full animate-[bounce-transform_1s_ease-in-out_infinite]"></span>
+                        <figcaption className="ml-1">
                           AI is typing, please wait...
-                        </span>
-                      </div>
-                    </div>
+                        </figcaption>
+                      </figure>
+                    </aside>
                   )}
 
-                  {/* Update message styling untuk mobile */}
+                  {/* Messages */}
                   {messages[currentChat.id]?.map((message, index, array) => (
-                    <div
+                    <article
                       key={index}
                       ref={index === array.length - 1 ? lastMessageRef : null}
                       className={`flex ${
@@ -1616,16 +1624,16 @@ export function DashboardComponent() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   ))}
-                </div>
-              </div>
+                </section>
+              </article>
             ) : (
               <WelcomeGuide onCreateGroup={createNewGroup} />
             )}
           </main>
 
-          {/* Update input area untuk mobile */}
+          {/* Input Area */}
           {currentChat && (
             <footer className="flex-none px-2 py-2 sm:p-4 border-t input-area safe-area-padding">
               <div className="flex space-x-2 max-w-3xl mx-auto">
@@ -1697,16 +1705,12 @@ export function DashboardComponent() {
               </div>
             </footer>
           )}
-        </div>
+        </section>
 
         {/* Code Preview Panel */}
         <AnimatePresence>
           {codeContent && isPreviewOpen && (
-            <motion.div
-              initial={{ transform: 'scaleX(0)', transformOrigin: 'right' }}
-              animate={{ transform: 'scaleX(1)' }}
-              exit={{ transform: 'scaleX(0)' }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+            <aside
               className="hidden md:block h-[100dvh] overflow-hidden border-l border-border/30 bg-gradient-to-b from-background to-background/95 backdrop-blur-sm"
               style={{ width: previewWidth }}
             >
@@ -1724,9 +1728,8 @@ export function DashboardComponent() {
                   left: "w-1 hover:w-1.5 -ml-0.5 h-full cursor-col-resize transition-all duration-200 bg-primary/30 hover:bg-primary/50 rounded-full absolute left-0 top-0",
                 }}
               >
-                <div className="h-full flex flex-col bg-gradient-to-b from-card/50 to-background/50 relative">
-                  {/* Header dengan styling yang lebih modern */}
-                  <div className="flex items-center justify-between p-3 border-b border-border/30 bg-gradient-to-r from-background/80 to-card/30 backdrop-blur">
+                <section className="h-full flex flex-col bg-gradient-to-b from-card/50 to-background/50 relative">
+                  <header className="flex items-center justify-between p-3 border-b border-border/30 bg-gradient-to-r from-background/80 to-card/30 backdrop-blur">
                     <div className="flex-1 pr-10">
                       <Tabs defaultValue="code" className="w-full">
                         <TabsList className="w-full bg-background/40 backdrop-blur p-1 rounded-lg border border-border/30">
@@ -1781,37 +1784,34 @@ export function DashboardComponent() {
                     >
                       <X className="h-4 w-4" />
                     </Button>
-                  </div>
-                </div>
+                  </header>
+                </section>
               </Resizable>
-            </motion.div>
+            </aside>
           )}
         </AnimatePresence>
 
-        {/* Toggle Preview Button */}
-        {codeContent && !isPreviewOpen && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsPreviewOpen(true)}
-            className="hidden md:inline-flex fixed bottom-20 right-8 z-10"
-          >
-            Show Preview
-          </Button>
-        )}
+        {/* Preview Toggle Buttons */}
+        <nav className="fixed bottom-20 right-8 z-10 flex flex-col gap-2">
+          {codeContent && !isPreviewOpen && (
+            <button
+              onClick={() => setIsPreviewOpen(true)}
+              className="hidden md:inline-flex btn btn-outline btn-sm"
+            >
+              Show Preview
+            </button>
+          )}
 
-        {/* Tombol Pratinjau Kode untuk Mobile*/}
-        {codeContent && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open("/code-preview", "_blank")}
-            className="md:hidden fixed bottom-20 right-8 z-10"
-          >
-            View Code
-          </Button>
-        )}
-      </div>
+          {codeContent && (
+            <button
+              onClick={() => window.open("/code-preview", "_blank")}
+              className="md:hidden btn btn-outline btn-sm"
+            >
+              View Code
+            </button>
+          )}
+        </nav>
+      </main>
     </Sheet>
   );
 }

@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
@@ -60,8 +60,8 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[100dvh] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
-      <motion.div
+    <main className="flex items-center justify-center min-h-[100dvh] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <motion.section
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -69,31 +69,12 @@ export default function LoginForm() {
       >
         <Card className="shadow-2xl bg-white/10 backdrop-blur-md border-gray-800">
           <CardHeader className="space-y-1 px-4 sm:px-6">
-            <div className="flex justify-center mb-4">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              >
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                  <img 
-                    src="/images/logos/techtalk-white.png"
-                    alt="Techtalk Logo" 
-                    className="w-10 h-10 object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = '/images/logos/fallback-logo.png'
-                      e.currentTarget.onerror = null
-                    }}
-                  />
-                </div>
-              </motion.div>
-            </div>
-            <CardTitle className="text-2xl font-bold text-center text-white">Techtalk</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center text-white">TECHTALK</CardTitle>
             <CardDescription className="text-center text-gray-400">Login to your account</CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
+              <fieldset className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-200">Username</Label>
                 <Input
                   id="username"
@@ -103,10 +84,10 @@ export default function LoginForm() {
                   className={`h-10 text-sm bg-gray-800 border-gray-700 text-white placeholder-gray-400 ${errors.username && "border-red-500"}`}
                 />
                 {errors.username && (
-                  <p className="text-red-400 text-xs mt-1">{errors.username.message}</p>
+                  <small className="text-red-400 text-xs mt-1">{errors.username.message}</small>
                 )}
-              </div>
-              <div className="space-y-2">
+              </fieldset>
+              <fieldset className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-200">Password</Label>
                 <Input
                   id="password"
@@ -116,9 +97,9 @@ export default function LoginForm() {
                   className={`h-10 text-sm bg-gray-800 border-gray-700 text-white placeholder-gray-400 ${errors.password && "border-red-500"}`}
                 />
                 {errors.password && (
-                  <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>
+                  <small className="text-red-400 text-xs mt-1">{errors.password.message}</small>
                 )}
-              </div>
+              </fieldset>
               <Button 
                 type="submit" 
                 className="w-full h-10 text-sm font-semibold bg-primary hover:bg-primary/90" 
@@ -134,32 +115,9 @@ export default function LoginForm() {
                 )}
               </Button>
             </form>
-            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:space-x-2">
-              <Button variant="outline" className="w-full bg-white hover:bg-gray-100 text-black text-sm sm:text-base" onClick={() => toast.info('Google login not implemented')}>
-                <img 
-                  src="https://th.bing.com/th/id/R.7e557f1c0864829c54c300d15bee69f4?rik=fjZN1AYH30vXIw&riu=http%3a%2f%2fpngimg.com%2fuploads%2fgoogle%2fgoogle_PNG19635.png&ehk=ZmsumEtoeJQhKoUzQTZO2TEbYPBu0%2b7EFdjmJ3qljls%3d&risl=&pid=ImgRaw&r=0"
-                  alt="Google Logo"
-                  className="w-5 h-5 mr-2"
-                />
-                <span className="font-medium text-black">Google</span>
-              </Button>
-              <Button variant="outline" className="w-full bg-white hover:bg-gray-100 text-black text-sm sm:text-base" onClick={() => toast.info('GitHub login not implemented')}>
-                <img 
-                  src="https://pngimg.com/uploads/github/github_PNG40.png"
-                  alt="GitHub Logo"
-                  className="w-5 h-5 mr-2"
-                />
-                <span className="font-medium text-black">GitHub</span>
-              </Button>
-            </div>
           </CardContent>
-          <CardFooter>
-            <p className="text-xs text-center w-full text-gray-400">
-              <a href="#" className="hover:text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); toast.info('Forgot password not implemented') }}>Forgot password?</a>
-            </p>
-          </CardFooter>
         </Card>
-      </motion.div>
-    </div>
+      </motion.section>
+    </main>
   )
 }
