@@ -500,6 +500,95 @@ const LoadingSpinner = () => (
   </figure>
 );
 
+// Add these interfaces above the fetchDataset function
+interface DatasetMessage {
+  role: string;
+  content: string;
+}
+
+interface DatasetRow {
+  row: {
+    messages: DatasetMessage[];
+  };
+}
+
+interface Dataset {
+  rows: DatasetRow[];
+}
+
+const fetchDataset = async () => {
+  try {
+    const response = await fetch('https://datasets-server.huggingface.co/rows?dataset=afrizalha%2FTumpeng-1-Indonesian&config=default&split=train&offset=0&length=100');
+    const data: Dataset = await response.json();
+    return data.rows.map((row: DatasetRow) => ({
+      messages: row.row.messages.map(msg => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content
+      }))
+    }));
+  } catch (error) {
+    console.error('Error fetching dataset:', error);
+    return [];
+  }
+};
+
+// Update the interfaces to handle both datasets
+interface UnifiedDataset {
+  type: 'prompt' | 'conversation';
+  category?: string;
+  content: {
+    prompt?: string;
+    act?: string;
+    messages?: {
+      role: "user" | "assistant";
+      content: string;
+    }[];
+  };
+}
+
+// Add this function to fetch and combine datasets
+const fetchUnifiedDataset = async () => {
+  try {
+    // Fetch both datasets concurrently
+    const [promptsResponse, conversationsResponse] = await Promise.all([
+      fetch('https://datasets-server.huggingface.co/rows?dataset=fka%2Fawesome-chatgpt-prompts&config=default&split=train&offset=0&length=100'),
+      fetch('https://datasets-server.huggingface.co/rows?dataset=afrizalha%2FTumpeng-1-Indonesian&config=default&split=train&offset=0&length=100')
+    ]);
+
+    const promptsData = await promptsResponse.json();
+    const conversationsData = await conversationsResponse.json();
+
+    // Transform and combine the datasets
+    const unifiedData: UnifiedDataset[] = [
+      // Transform prompts
+      ...promptsData.rows.map((item: PromptRow) => ({
+        type: 'prompt' as const,
+        category: 'chatgpt',
+        content: {
+          prompt: item.row.prompt,
+          act: item.row.act
+        }
+      })),
+      // Transform conversations
+      ...conversationsData.rows.map((item: DatasetRow) => ({
+        type: 'conversation' as const,
+        category: 'tumpeng',
+        content: {
+          messages: item.row.messages.map(msg => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content
+          }))
+        }
+      }))
+    ];
+
+    return unifiedData;
+  } catch (error) {
+    console.error('Error fetching unified dataset:', error);
+    return [];
+  }
+};
+
 export function DashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
@@ -1235,6 +1324,58 @@ export function DashboardComponent() {
     </Suspense>
   );
 
+  // Replace separate dataset states with unified state
+  const [unifiedDataset, setUnifiedDataset] = useState<UnifiedDataset[]>([]);
+  const [isLoadingDataset, setIsLoadingDataset] = useState(false);
+
+  // Update the dataset loading effect
+  useEffect(() => {
+    const loadUnifiedDataset = async () => {
+      setIsLoadingDataset(true);
+      try {
+        const data = await fetchUnifiedDataset();
+        setUnifiedDataset(data);
+      } catch (error) {
+        console.error("Error loading unified dataset:", error);
+      } finally {
+        setIsLoadingDataset(false);
+      }
+    };
+
+    loadUnifiedDataset();
+  }, []);
+
+  // Update the dropdown menu content
+  const renderDatasetContent = (type: 'prompt' | 'conversation') => (
+    <ScrollArea className="h-[300px]">
+      {unifiedDataset
+        .filter(item => item.type === type)
+        .map((item, idx) => (
+          <div
+            key={idx}
+            className="p-2 hover:bg-secondary rounded-md cursor-pointer"
+            onClick={() => {
+              if (type === 'prompt' && item.content.prompt) {
+                setInputMessage(item.content.prompt);
+              } else if (type === 'conversation' && item.content.messages) {
+                const userMessage = item.content.messages.find(m => m.role === "user");
+                if (userMessage) setInputMessage(userMessage.content);
+              }
+            }}
+          >
+            <div className="font-medium text-xs">
+              {type === 'prompt' ? item.content.act : 'User Query'}
+            </div>
+            <div className="text-xs text-muted-foreground line-clamp-2">
+              {type === 'prompt' 
+                ? item.content.prompt 
+                : item.content.messages?.find(m => m.role === "user")?.content}
+            </div>
+          </div>
+        ))}
+    </ScrollArea>
+  );
+
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
       <main className="flex vh-fix overflow-hidden bg-background text-foreground">
@@ -1648,29 +1789,36 @@ export function DashboardComponent() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[300px]">
-                    <div className="p-2">
-                      <div className="text-sm font-medium mb-2">
-                        Quick Prompts
-                      </div>
-                      <ScrollArea className="h-[300px]">
-                        {prompts.map((item) => (
-                          <div
-                            key={item.row_idx}
-                            className="p-2 hover:bg-secondary rounded-md cursor-pointer"
-                            onClick={() => {
-                              setInputMessage(item.row.prompt);
-                            }}
-                          >
-                            <div className="font-medium text-xs">
-                              {item.row.act}
+                    <Tabs defaultValue="chatgpt" className="w-full">
+                      <TabsList className="w-full">
+                        <TabsTrigger value="chatgpt">ChatGPT Prompts</TabsTrigger>
+                        <TabsTrigger value="tumpeng">Tumpeng Dataset</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="chatgpt">
+                        <div className="p-2">
+                          {isLoadingDataset ? (
+                            <div className="flex justify-center p-4">
+                              <LoadingSpinner />
                             </div>
-                            <div className="text-xs text-muted-foreground line-clamp-2">
-                              {item.row.prompt}
+                          ) : (
+                            renderDatasetContent('prompt')
+                          )}
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="tumpeng">
+                        <div className="p-2">
+                          {isLoadingDataset ? (
+                            <div className="flex justify-center p-4">
+                              <LoadingSpinner />
                             </div>
-                          </div>
-                        ))}
-                      </ScrollArea>
-                    </div>
+                          ) : (
+                            renderDatasetContent('conversation')
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </DropdownMenuContent>
                 </DropdownMenu>
 

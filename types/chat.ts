@@ -45,4 +45,38 @@ export interface PromptRow {
 
 export interface DatasetResponse {
   rows: PromptRow[];
+}
+
+export interface DatasetMessage {
+  content: string;
+  role: "user" | "assistant";
+}
+
+export interface DatasetRow {
+  row_idx: number;
+  row: {
+    messages: DatasetMessage[];
+  };
+  truncated_cells: any[];
+}
+
+export interface Dataset {
+  features: Array<{
+    feature_idx: number;
+    name: string;
+    type: Array<{
+      content: {
+        dtype: string;
+        _type: string;
+      };
+      role: {
+        dtype: string;
+        _type: string;
+      };
+    }>;
+  }>;
+  rows: DatasetRow[];
+  num_rows_total: number;
+  num_rows_per_page: number;
+  partial: boolean;
 } 
