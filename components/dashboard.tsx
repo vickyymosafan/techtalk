@@ -1204,15 +1204,23 @@ export function DashboardComponent() {
 
   // Add this helper function inside DashboardComponent
   const formatTableContent = (content: string) => {
-    // Wrap tables with scrollable container and inner wrapper
+    // Pastikan tabel memiliki struktur yang benar
     return content.replace(
       /<table>([\s\S]*?)<\/table>/g,
-      `<div class="table-wrapper">
-        <div class="table-wrapper-inner">
-          <table>$1</table>
-        </div>
-        <span class="table-scroll-indicator">Scroll to see more</span>
-      </div>`
+      (match, tableContent) => {
+        // Bersihkan whitespace yang tidak perlu
+        const cleanedContent = tableContent.trim();
+        
+        return `
+          <div class="table-wrapper">
+            <div class="table-wrapper-inner">
+              <table>
+                ${cleanedContent}
+              </table>
+            </div>
+          </div>
+        `;
+      }
     );
   };
 
