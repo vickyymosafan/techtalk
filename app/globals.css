@@ -249,6 +249,107 @@
     margin: 0;
     padding: 0;
   }
+
+  /* Tabs Container Styling */
+  .tabs-container {
+    @apply flex flex-col h-full;
+  }
+
+  .tab-content {
+    @apply flex-1 overflow-auto;
+  }
+
+  /* Preview Tab Styling */
+  [role="tabpanel"][data-state="active"] {
+    @apply h-[calc(100vh-8rem)] relative overflow-hidden;
+  }
+
+  .preview-container {
+    @apply flex flex-col h-full;
+  }
+
+  .preview-content {
+    @apply flex-1 relative overflow-hidden;
+  }
+
+  /* Device Preview Styling */
+  .device-frame {
+    @apply bg-background shadow-2xl transition-all duration-300 border border-border/50;
+    transform-origin: center center;
+    
+    &.fullscreen-frame {
+      @apply border-none rounded-lg shadow-2xl;
+      height: calc(100vh - 8rem) !important;
+    }
+  }
+
+  .device-frame-mobile {
+    @apply rounded-[2.5rem] border-[14px] border-border/80;
+    box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  .device-frame-tablet {
+    @apply rounded-[2rem] border-[12px] border-border/80;
+    box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Device Container Styling */
+  .device-container-mobile,
+  .device-container-tablet {
+    @apply relative;
+    
+    &::after {
+      content: '';
+      @apply absolute top-0 left-1/2 -translate-x-1/2 bg-border/80;
+    }
+  }
+
+  .device-container-mobile::after {
+    @apply w-16 h-4 rounded-b-2xl;
+  }
+
+  .device-container-tablet::after {
+    @apply w-24 h-3 rounded-b-xl;
+  }
+
+  /* Fullscreen Animation */
+  .fullscreen-enter {
+    @apply opacity-0 scale-95;
+  }
+
+  .fullscreen-enter-active {
+    @apply opacity-100 scale-100;
+    transition: opacity 200ms ease-out, transform 200ms ease-out;
+  }
+
+  .fullscreen-exit {
+    @apply opacity-100 scale-100;
+  }
+
+  .fullscreen-exit-active {
+    @apply opacity-0 scale-95;
+    transition: opacity 200ms ease-in, transform 200ms ease-in;
+  }
+
+  /* Preview Container */
+  .preview-wrapper {
+    @apply relative w-full h-full overflow-hidden;
+    
+    &.fullscreen {
+      @apply fixed inset-0 z-50;
+      @apply bg-background/80 backdrop-blur-sm;
+      @apply flex items-center justify-center p-4 sm:p-8;
+    }
+  }
+
+  .preview-frame-container {
+    @apply relative transition-all duration-300;
+    
+    &.fullscreen {
+      @apply w-full h-full max-w-6xl mx-auto;
+      @apply bg-background rounded-lg shadow-2xl overflow-hidden;
+    }
+  }
 }
 
 /* Utilities Layer - Helper classes */
@@ -280,32 +381,58 @@
 /* Mobile Optimizations */
 @media (max-width: 640px) {
   .markdown-content {
-    @apply text-[13px];
+    @apply text-[15px] leading-relaxed;
 
-    h1 { @apply text-lg font-bold; }
-    h2 { @apply text-base font-bold; }
-    h3 { @apply text-sm font-semibold; }
+    h1 { @apply text-xl font-bold; }
+    h2 { @apply text-lg font-bold; }
+    h3 { @apply text-base font-semibold; }
     
-    pre, code { @apply text-[12px]; }
+    pre, code { @apply text-[13px]; line-height: 1.5; }
     
-    pre { @apply p-3 max-w-[calc(100vw-2rem)]; }
+    pre { @apply p-3 max-w-[calc(100vw-2rem)]; line-height: 1.6; }
     
     table {
-      @apply text-sm border rounded-lg my-4;
+      @apply text-[14px] border rounded-lg my-4;
       
-      th { @apply px-3 py-2 text-[13px] font-medium; }
-      td { @apply px-3 py-2 text-[13px]; }
+      th { @apply px-3 py-2 text-[14px] font-medium; line-height: 1.4; }
+      td { @apply px-3 py-2 text-[14px]; line-height: 1.4; }
+    }
+
+    > ul, > ol {
+      @apply space-y-2;
+      li {
+        @apply leading-relaxed;
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    p {
+      @apply text-[15px] leading-relaxed;
+      margin-bottom: 0.75rem;
     }
   }
 
   .table-wrapper {
     table {
-      @apply text-xs;
+      @apply text-[14px];
       
       th, td {
-        @apply px-2 py-1.5;
+        @apply px-2.5 py-2;
+        line-height: 1.4;
       }
     }
+  }
+
+  .chat-input-container > div {
+    @apply text-[15px];
+  }
+
+  [role="user"] .markdown-content {
+    @apply text-[15px] leading-relaxed;
+  }
+
+  .message-container {
+    @apply px-3 py-2.5 sm:px-4 sm:py-3;
   }
 }
 
@@ -316,4 +443,8 @@
     padding-right: max(1rem, env(safe-area-inset-right));
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+}
+
+.message-timestamp {
+  @apply text-[11px] text-muted-foreground/70;
 }

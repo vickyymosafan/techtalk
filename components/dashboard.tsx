@@ -75,8 +75,8 @@ import type {
 import { useAuth } from "@/contexts/auth-context";
 import { WelcomeGuide } from "./welcome-guide";
 import NodeCache from "node-cache";
-import { debounce } from 'lodash';
-import dynamic from 'next/dynamic';
+import { debounce } from "lodash";
+import dynamic from "next/dynamic";
 
 const CodePreview = dynamic(() => import("./code-preview"), {
   loading: () => (
@@ -84,7 +84,7 @@ const CodePreview = dynamic(() => import("./code-preview"), {
       <LoadingSpinner />
     </div>
   ),
-  ssr: false // Disable SSR for code preview
+  ssr: false, // Disable SSR for code preview
 });
 
 const MarkdownPreview = dynamic(() => import("./markdown-preview"), {
@@ -92,7 +92,7 @@ const MarkdownPreview = dynamic(() => import("./markdown-preview"), {
     <div className="h-full flex items-center justify-center">
       <LoadingSpinner />
     </div>
-  )
+  ),
 });
 
 const SvgPreview = dynamic(() => import("./svg-preview"), {
@@ -101,7 +101,7 @@ const SvgPreview = dynamic(() => import("./svg-preview"), {
       <LoadingSpinner />
     </div>
   ),
-  ssr: false // Disable SSR for SVG preview
+  ssr: false, // Disable SSR for SVG preview
 });
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -110,7 +110,7 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
       <LoadingSpinner />
     </div>
   ),
-  ssr: false // Disable SSR for Monaco editor
+  ssr: false, // Disable SSR for Monaco editor
 });
 
 interface ChatTypeInfo {
@@ -249,7 +249,7 @@ const extractRequestedCount = (message: string): number | null => {
 };
 
 // Tambahkan CSS untuk menyembunyikan scrollbar pada overflow-x
-const styles = ''; // Kosongkan karena styles sudah dipindah ke globals.css
+const styles = ""; // Kosongkan karena styles sudah dipindah ke globals.css
 
 // Update fungsi copyToClipboard
 const copyToClipboard = async (text: string) => {
@@ -344,23 +344,25 @@ interface Dataset {
 
 const fetchDataset = async () => {
   try {
-    const response = await fetch('https://datasets-server.huggingface.co/rows?dataset=afrizalha%2FTumpeng-1-Indonesian&config=default&split=train&offset=0&length=100');
+    const response = await fetch(
+      "https://datasets-server.huggingface.co/rows?dataset=afrizalha%2FTumpeng-1-Indonesian&config=default&split=train&offset=0&length=100"
+    );
     const data: Dataset = await response.json();
     return data.rows.map((row: DatasetRow) => ({
-      messages: row.row.messages.map(msg => ({
+      messages: row.row.messages.map((msg) => ({
         role: msg.role as "user" | "assistant",
-        content: msg.content
-      }))
+        content: msg.content,
+      })),
     }));
   } catch (error) {
-    console.error('Error fetching dataset:', error);
+    console.error("Error fetching dataset:", error);
     return [];
   }
 };
 
 // Update the interfaces to handle both datasets
 interface UnifiedDataset {
-  type: 'prompt' | 'conversation';
+  type: "prompt" | "conversation";
   category?: string;
   content: {
     prompt?: string;
@@ -377,8 +379,12 @@ const fetchUnifiedDataset = async () => {
   try {
     // Fetch both datasets concurrently
     const [promptsResponse, conversationsResponse] = await Promise.all([
-      fetch('https://datasets-server.huggingface.co/rows?dataset=fka%2Fawesome-chatgpt-prompts&config=default&split=train&offset=0&length=100'),
-      fetch('https://datasets-server.huggingface.co/rows?dataset=afrizalha%2FTumpeng-1-Indonesian&config=default&split=train&offset=0&length=100')
+      fetch(
+        "https://datasets-server.huggingface.co/rows?dataset=fka%2Fawesome-chatgpt-prompts&config=default&split=train&offset=0&length=100"
+      ),
+      fetch(
+        "https://datasets-server.huggingface.co/rows?dataset=afrizalha%2FTumpeng-1-Indonesian&config=default&split=train&offset=0&length=100"
+      ),
     ]);
 
     const promptsData = await promptsResponse.json();
@@ -388,29 +394,29 @@ const fetchUnifiedDataset = async () => {
     const unifiedData: UnifiedDataset[] = [
       // Transform prompts
       ...promptsData.rows.map((item: PromptRow) => ({
-        type: 'prompt' as const,
-        category: 'chatgpt',
+        type: "prompt" as const,
+        category: "chatgpt",
         content: {
           prompt: item.row.prompt,
-          act: item.row.act
-        }
+          act: item.row.act,
+        },
       })),
       // Transform conversations
       ...conversationsData.rows.map((item: DatasetRow) => ({
-        type: 'conversation' as const,
-        category: 'tumpeng',
+        type: "conversation" as const,
+        category: "tumpeng",
         content: {
-          messages: item.row.messages.map(msg => ({
+          messages: item.row.messages.map((msg) => ({
             role: msg.role as "user" | "assistant",
-            content: msg.content
-          }))
-        }
-      }))
+            content: msg.content,
+          })),
+        },
+      })),
     ];
 
     return unifiedData;
   } catch (error) {
-    console.error('Error fetching unified dataset:', error);
+    console.error("Error fetching unified dataset:", error);
     return [];
   }
 };
@@ -510,15 +516,16 @@ export function DashboardComponent() {
   // Add new state for hardware acceleration
   const [hasGPU, setHasGPU] = useState(false);
 
-  // Add function to check for GPU availability 
+  // Add function to check for GPU availability
   const checkGPUAvailability = useCallback(async () => {
     try {
       // Check if WebGL is available as a proxy for GPU support
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
       setHasGPU(!!gl);
     } catch (error) {
-      console.error('Error checking GPU availability:', error);
+      console.error("Error checking GPU availability:", error);
       setHasGPU(false);
     }
   }, []);
@@ -528,26 +535,26 @@ export function DashboardComponent() {
     if (!modelLoaded) {
       try {
         setIsLoading(true);
-        
+
         // Check GPU availability before loading
         await checkGPUAvailability();
-        
+
         // Configure model to use GPU if available
         const modelConfig = {
           useGPU: hasGPU,
           // Add other acceleration options based on environment
           useTensorflowJS: true,
           useWebGL: hasGPU,
-          useWASM: !hasGPU // Fallback to WASM if no GPU
+          useWASM: !hasGPU, // Fallback to WASM if no GPU
         };
 
         // Load model with hardware acceleration config
         // Replace with actual model loading logic
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         setModelLoaded(true);
       } catch (error) {
-        console.error('Error loading model:', error);
+        console.error("Error loading model:", error);
       } finally {
         setIsLoading(false);
       }
@@ -564,7 +571,7 @@ export function DashboardComponent() {
     if (!modelLoaded) {
       await loadModel();
     }
-    
+
     // Reset unload timer
     if (modelLoadTimeoutRef.current) {
       clearTimeout(modelLoadTimeoutRef.current);
@@ -579,7 +586,9 @@ export function DashboardComponent() {
       setCurrentCount(0);
 
       // Generate cache key from input message
-      const cacheKey = `ai_response_${Buffer.from(inputMessage).toString('base64')}`;
+      const cacheKey = `ai_response_${Buffer.from(inputMessage).toString(
+        "base64"
+      )}`;
 
       // Check cache first
       const cachedResponse = aiResponseCache.get(cacheKey);
@@ -590,8 +599,8 @@ export function DashboardComponent() {
           [currentChat.id]: [
             ...(prev[currentChat.id] || []),
             { role: "user", content: inputMessage },
-            { role: "assistant", content: cachedResponse as string }
-          ]
+            { role: "assistant", content: cachedResponse as string },
+          ],
         }));
         setInputMessage("");
         scrollToBottom(true);
@@ -643,7 +652,7 @@ export function DashboardComponent() {
       // Force scroll to bottom immediately when sending
       scrollToBottom(true);
 
-      let fullResponse = '';
+      let fullResponse = "";
 
       streamGroqResponse(
         [
@@ -1050,24 +1059,28 @@ export function DashboardComponent() {
   }, []);
 
   // Add this function inside DashboardComponent
-  const adjustTextareaHeight = useCallback((textarea: HTMLTextAreaElement) => {
-    if (!textarea) return;
-    
-    // Reset height to min to accurately calculate scroll height
-    textarea.style.height = 'auto';
-    
-    // Get the computed styles
-    const computedStyle = window.getComputedStyle(textarea);
-    const minHeight = isMobile ? 36 : 44;
-    
-    // Calculate new height
-    const newHeight = Math.min(
-      Math.max(textarea.scrollHeight, minHeight),
-      150 // max height
-    );
-    
-    textarea.style.height = `${newHeight}px`;
-  }, [isMobile]);
+  const adjustTextareaHeight = useCallback(
+    (textarea: HTMLTextAreaElement) => {
+      if (!textarea) return;
+
+      // Reset height to min to accurately calculate scroll height
+      textarea.style.height = "auto";
+
+      // Get the computed styles
+      const computedStyle = window.getComputedStyle(textarea);
+      const minHeight = isMobile ? 36 : 44;
+      const maxHeight = isMobile ? 100 : 120; // Batasi tinggi maksimum
+
+      // Calculate new height
+      const newHeight = Math.min(
+        Math.max(textarea.scrollHeight, minHeight),
+        maxHeight
+      );
+
+      textarea.style.height = `${newHeight}px`;
+    },
+    [isMobile]
+  );
 
   // Update handleInputChange
   const handleInputChange = useCallback(
@@ -1122,13 +1135,13 @@ export function DashboardComponent() {
 
   // 3. Add error boundaries for lazy components
   const handleComponentError = useCallback((error: Error) => {
-    console.error('Component failed to load:', error);
+    console.error("Component failed to load:", error);
     // Handle error state appropriately
   }, []);
 
   // 4. Render code preview section with improved code splitting
   const renderCodePreview = () => (
-    <Suspense 
+    <Suspense
       fallback={
         <figure className="h-full flex items-center justify-center">
           <LoadingSpinner />
@@ -1145,10 +1158,10 @@ export function DashboardComponent() {
         </figure>
       ) : (
         <article className="code-preview">
-          <CodePreview 
+          <CodePreview
             language={currentLanguage}
             content={codeContent}
-            theme={theme || 'light'}
+            theme={theme || "light"}
           />
         </article>
       )}
@@ -1171,9 +1184,11 @@ export function DashboardComponent() {
         value={isEditing ? editedCode : codeContent}
         onChange={handleCodeChange}
         onMount={() => setIsEditorLoading(false)}
-        options={{
-          // ... existing options ...
-        }}
+        options={
+          {
+            // ... existing options ...
+          }
+        }
       />
     </Suspense>
   );
@@ -1200,30 +1215,33 @@ export function DashboardComponent() {
   }, []);
 
   // Update the dropdown menu content
-  const renderDatasetContent = (type: 'prompt' | 'conversation') => (
+  const renderDatasetContent = (type: "prompt" | "conversation") => (
     <ScrollArea className="h-[300px]">
       {unifiedDataset
-        .filter(item => item.type === type)
+        .filter((item) => item.type === type)
         .map((item, idx) => (
           <div
             key={idx}
             className="p-2 hover:bg-secondary rounded-md cursor-pointer"
             onClick={() => {
-              if (type === 'prompt' && item.content.prompt) {
+              if (type === "prompt" && item.content.prompt) {
                 setInputMessage(item.content.prompt);
-              } else if (type === 'conversation' && item.content.messages) {
-                const userMessage = item.content.messages.find(m => m.role === "user");
+              } else if (type === "conversation" && item.content.messages) {
+                const userMessage = item.content.messages.find(
+                  (m) => m.role === "user"
+                );
                 if (userMessage) setInputMessage(userMessage.content);
               }
             }}
           >
             <div className="font-medium text-xs">
-              {type === 'prompt' ? item.content.act : 'User Query'}
+              {type === "prompt" ? item.content.act : "User Query"}
             </div>
             <div className="text-xs text-muted-foreground line-clamp-2">
-              {type === 'prompt' 
-                ? item.content.prompt 
-                : item.content.messages?.find(m => m.role === "user")?.content}
+              {type === "prompt"
+                ? item.content.prompt
+                : item.content.messages?.find((m) => m.role === "user")
+                    ?.content}
             </div>
           </div>
         ))}
@@ -1238,7 +1256,7 @@ export function DashboardComponent() {
       (match, tableContent) => {
         // Bersihkan whitespace yang tidak perlu
         const cleanedContent = tableContent.trim();
-        
+
         return `
           <div class="table-wrapper">
             <div class="table-wrapper-inner">
@@ -1254,11 +1272,11 @@ export function DashboardComponent() {
 
   // Add this effect to handle scroll indicators
   useEffect(() => {
-    const tableWrappers = document.querySelectorAll('.table-wrapper');
-    
+    const tableWrappers = document.querySelectorAll(".table-wrapper");
+
     const checkScroll = (wrapper: Element) => {
       const isScrollable = wrapper.scrollWidth > wrapper.clientWidth;
-      wrapper.classList.toggle('is-scrollable', isScrollable);
+      wrapper.classList.toggle("is-scrollable", isScrollable);
     };
 
     const handleResize = () => {
@@ -1267,24 +1285,25 @@ export function DashboardComponent() {
 
     // Check on mount and window resize
     handleResize();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // Add scroll event listeners to show/hide indicators
-    tableWrappers.forEach(wrapper => {
-      wrapper.addEventListener('scroll', () => {
+    tableWrappers.forEach((wrapper) => {
+      wrapper.addEventListener("scroll", () => {
         const isAtStart = wrapper.scrollLeft <= 0;
-        const isAtEnd = wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth;
-        
-        wrapper.classList.toggle('at-start', isAtStart);
-        wrapper.classList.toggle('at-end', isAtEnd);
+        const isAtEnd =
+          wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth;
+
+        wrapper.classList.toggle("at-start", isAtStart);
+        wrapper.classList.toggle("at-end", isAtEnd);
       });
-      
+
       // Initial check
       checkScroll(wrapper);
     });
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, [messages]); // Re-run when messages change
 
@@ -1707,11 +1726,11 @@ export function DashboardComponent() {
           {/* Input Area */}
           {currentChat && (
             <footer className="flex-none px-2 py-2 sm:p-4 border-t input-area safe-area-padding">
-              <div className="chat-input-container">
+              <div className="chat-input-container max-h-[150px]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="chat-input-button icon-button"
                     >
                       <BrainCircuit className="h-4 w-4" />
@@ -1720,10 +1739,14 @@ export function DashboardComponent() {
                   <DropdownMenuContent align="start" className="w-[300px]">
                     <Tabs defaultValue="chatgpt" className="w-full">
                       <TabsList className="w-full">
-                        <TabsTrigger value="chatgpt">ChatGPT Prompts</TabsTrigger>
-                        <TabsTrigger value="tumpeng">Tumpeng Dataset</TabsTrigger>
+                        <TabsTrigger value="chatgpt">
+                          ChatGPT Prompts
+                        </TabsTrigger>
+                        <TabsTrigger value="tumpeng">
+                          Tumpeng Dataset
+                        </TabsTrigger>
                       </TabsList>
-                      
+
                       <TabsContent value="chatgpt">
                         <div className="p-2">
                           {isLoadingDataset ? (
@@ -1731,11 +1754,11 @@ export function DashboardComponent() {
                               <LoadingSpinner />
                             </div>
                           ) : (
-                            renderDatasetContent('prompt')
+                            renderDatasetContent("prompt")
                           )}
                         </div>
                       </TabsContent>
-                      
+
                       <TabsContent value="tumpeng">
                         <div className="p-2">
                           {isLoadingDataset ? (
@@ -1743,7 +1766,7 @@ export function DashboardComponent() {
                               <LoadingSpinner />
                             </div>
                           ) : (
-                            renderDatasetContent('conversation')
+                            renderDatasetContent("conversation")
                           )}
                         </div>
                       </TabsContent>
@@ -1764,14 +1787,17 @@ export function DashboardComponent() {
                       }
                     }
                   }}
-                  className="chat-input"
+                  className="chat-input min-h-[40px] max-h-[120px] overflow-y-auto resize-none"
                   rows={1}
-                  style={{ overflow: inputMessage.split('\n').length > 1 ? 'auto' : 'hidden' }}
+                  style={{
+                    height: "auto",
+                    overflowY: inputMessage.split("\n").length > 1 ? "auto" : "hidden"
+                  }}
                 />
 
                 <Button
                   onClick={handleSendMessage}
-                  className="chat-input-button send-button"
+                  className="chat-input-button send-button flex-shrink-0"
                   disabled={isLoading || !inputMessage.trim()}
                 >
                   <Send className="h-4 w-4 sm:mr-2" />
@@ -1804,7 +1830,7 @@ export function DashboardComponent() {
                 }}
               >
                 <section className="h-full flex flex-col bg-gradient-to-b from-card/50 to-background/50 relative">
-                  <header className="flex items-center justify-between p-3 border-b border-border/30 bg-gradient-to-r from-background/80 to-card/30 backdrop-blur">
+                  <header className="flex-none flex items-center justify-between p-3 border-b border-border/30 bg-gradient-to-r from-background/80 to-card/30 backdrop-blur">
                     <div className="flex-1 pr-10">
                       <Tabs defaultValue="code" className="w-full">
                         <TabsList className="w-full bg-background/40 backdrop-blur p-1 rounded-lg border border-border/30">
@@ -1842,10 +1868,16 @@ export function DashboardComponent() {
                         {/* Preview Tab Content */}
                         <TabsContent
                           value="preview"
-                          className="h-[calc(100vh-6rem)] mt-4"
-                          style={{ width: `${previewWidth - 24}px` }}
+                          className="absolute inset-0 mt-4"
+                          style={{
+                            width: `${previewWidth - 24}px`,
+                            height: "calc(100vh - 8rem)",
+                            overflow: "hidden",
+                          }}
                         >
-                          {renderCodePreview()}
+                          <div className="h-full w-full relative overflow-hidden">
+                            {renderCodePreview()}
+                          </div>
                         </TabsContent>
                       </Tabs>
                     </div>
