@@ -1049,13 +1049,41 @@ export function DashboardComponent() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Optimasi input handling untuk mobile
+  // Add this function inside DashboardComponent
+  const adjustTextareaHeight = useCallback((textarea: HTMLTextAreaElement) => {
+    if (!textarea) return;
+    
+    // Reset height to min to accurately calculate scroll height
+    textarea.style.height = 'auto';
+    
+    // Get the computed styles
+    const computedStyle = window.getComputedStyle(textarea);
+    const minHeight = isMobile ? 36 : 44;
+    
+    // Calculate new height
+    const newHeight = Math.min(
+      Math.max(textarea.scrollHeight, minHeight),
+      150 // max height
+    );
+    
+    textarea.style.height = `${newHeight}px`;
+  }, [isMobile]);
+
+  // Update handleInputChange
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInputMessage(e.target.value);
+      adjustTextareaHeight(e.target);
     },
-    []
+    [adjustTextareaHeight]
   );
+
+  // Add effect to handle initial height
+  useEffect(() => {
+    if (inputRef.current) {
+      adjustTextareaHeight(inputRef.current);
+    }
+  }, [adjustTextareaHeight, inputMessage]);
 
   // Add unload function
   const unloadModel = useCallback(() => {
@@ -1679,13 +1707,12 @@ export function DashboardComponent() {
           {/* Input Area */}
           {currentChat && (
             <footer className="flex-none px-2 py-2 sm:p-4 border-t input-area safe-area-padding">
-              <div className="flex space-x-2 max-w-3xl mx-auto">
+              <div className="chat-input-container">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-[36px] sm:h-[44px]"
+                    <Button 
+                      variant="outline" 
+                      className="chat-input-button icon-button"
                     >
                       <BrainCircuit className="h-4 w-4" />
                     </Button>
@@ -1737,16 +1764,14 @@ export function DashboardComponent() {
                       }
                     }
                   }}
-                  className="flex-1 min-h-[36px] sm:min-h-[44px] resize-none py-1.5 sm:py-2 text-sm rounded-lg"
-                  style={{
-                    maxHeight: "100px",
-                    overflow: "auto",
-                  }}
+                  className="chat-input"
                   rows={1}
+                  style={{ overflow: inputMessage.split('\n').length > 1 ? 'auto' : 'hidden' }}
                 />
+
                 <Button
                   onClick={handleSendMessage}
-                  className="h-[36px] sm:h-[44px] px-3 sm:px-4"
+                  className="chat-input-button send-button"
                   disabled={isLoading || !inputMessage.trim()}
                 >
                   <Send className="h-4 w-4 sm:mr-2" />

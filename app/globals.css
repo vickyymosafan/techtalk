@@ -175,6 +175,80 @@
       }
     }
   }
+
+  /* Chat Input Styling */
+  .chat-input {
+    @apply flex-1 resize-none rounded-lg text-sm;
+    @apply bg-background border border-input;
+    @apply focus:outline-none focus:ring-1 focus:ring-primary;
+    @apply placeholder:text-muted-foreground;
+    
+    /* Match button height exactly */
+    height: 36px;
+    min-height: 36px;
+    line-height: 36px;
+    padding: 0 12px;
+    
+    /* Responsive height for desktop */
+    @screen sm {
+      height: 44px;
+      min-height: 44px;
+      line-height: 44px;
+      padding: 0 16px;
+    }
+    
+    /* Center placeholder text */
+    &::placeholder {
+      line-height: 36px;
+      @screen sm {
+        line-height: 44px;
+      }
+    }
+    
+    /* Remove auto-grow behavior */
+    transition: none;
+    
+    /* Disable resizing */
+    resize: none;
+    overflow: hidden;
+    
+    /* Remove any margin/padding from container */
+    margin: 0;
+    display: block;
+    
+    /* Scrollbar styling */
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  /* Chat Input Container */
+  .chat-input-container {
+    @apply flex items-center space-x-2 max-w-3xl mx-auto;
+  }
+
+  /* Chat Input Button */
+  .chat-input-button {
+    @apply h-[36px] sm:h-[44px];
+    @apply transition-all duration-200;
+    
+    &.icon-button {
+      @apply px-3;
+    }
+    
+    &.send-button {
+      @apply px-3 sm:px-4;
+      @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+  }
+
+  /* Remove any extra spacing from Textarea component wrapper */
+  .chat-input-container > div {
+    @apply h-[36px] sm:h-[44px];
+    margin: 0;
+    padding: 0;
+  }
 }
 
 /* Utilities Layer - Helper classes */
