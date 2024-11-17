@@ -1376,6 +1376,56 @@ export function DashboardComponent() {
     </ScrollArea>
   );
 
+  // Add this helper function inside DashboardComponent
+  const formatTableContent = (content: string) => {
+    // Wrap tables with scrollable container and inner wrapper
+    return content.replace(
+      /<table>([\s\S]*?)<\/table>/g,
+      `<div class="table-wrapper">
+        <div class="table-wrapper-inner">
+          <table>$1</table>
+        </div>
+        <span class="table-scroll-indicator">Scroll to see more</span>
+      </div>`
+    );
+  };
+
+  // Add this effect to handle scroll indicators
+  useEffect(() => {
+    const tableWrappers = document.querySelectorAll('.table-wrapper');
+    
+    const checkScroll = (wrapper: Element) => {
+      const isScrollable = wrapper.scrollWidth > wrapper.clientWidth;
+      wrapper.classList.toggle('is-scrollable', isScrollable);
+    };
+
+    const handleResize = () => {
+      tableWrappers.forEach(checkScroll);
+    };
+
+    // Check on mount and window resize
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    // Add scroll event listeners to show/hide indicators
+    tableWrappers.forEach(wrapper => {
+      wrapper.addEventListener('scroll', () => {
+        const isAtStart = wrapper.scrollLeft <= 0;
+        const isAtEnd = wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth;
+        
+        wrapper.classList.toggle('at-start', isAtStart);
+        wrapper.classList.toggle('at-end', isAtEnd);
+      });
+      
+      // Initial check
+      checkScroll(wrapper);
+    });
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [messages]); // Re-run when messages change
+
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
       <main className="flex vh-fix overflow-hidden bg-background text-foreground">
@@ -1761,9 +1811,21 @@ export function DashboardComponent() {
                                   />
                                 ),
                                 // ... other components
+                                table: ({ node, ...props }) => (
+                                  <table {...props} className="w-full" />
+                                ),
+                                thead: ({ node, ...props }) => (
+                                  <thead {...props} className="bg-gradient" />
+                                ),
+                                th: ({ node, ...props }) => (
+                                  <th {...props} className="table-header" />
+                                ),
+                                td: ({ node, ...props }) => (
+                                  <td {...props} className="table-cell" />
+                                ),
                               }}
                             >
-                              {message.content}
+                              {formatTableContent(message.content)}
                             </ReactMarkdown>
                           </div>
                           <div className="mt-0.5 text-[11px] text-muted-foreground opacity-70">
