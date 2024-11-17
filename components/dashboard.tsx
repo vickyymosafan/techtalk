@@ -912,11 +912,13 @@ export function DashboardComponent() {
   }, [groups.length]);
 
   const toggleGroupExpansion = useCallback((groupId: string) => {
-    setExpandedGroups((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId]
-    );
+    setExpandedGroups((prev) => {
+      if (prev.includes(groupId)) {
+        return prev.filter((id) => id !== groupId);
+      } else {
+        return [...prev, groupId];
+      }
+    });
   }, []);
 
   const renameGroup = useCallback(
@@ -1250,18 +1252,32 @@ export function DashboardComponent() {
 
   // Add this helper function inside DashboardComponent
   const formatTableContent = (content: string) => {
-    // Pastikan tabel memiliki struktur yang benar
+    // Handle markdown tables instead of HTML tables
     return content.replace(
-      /<table>([\s\S]*?)<\/table>/g,
-      (match, tableContent) => {
-        // Bersihkan whitespace yang tidak perlu
-        const cleanedContent = tableContent.trim();
+      /\|(.+)\|\n\|(?:-{3,}\|)+\n((?:\|.+\|\n?)*)/g,
+      (match: string, header: string, body: string) => {
+        const headers = header.split('|').filter((cell: string) => cell.trim());
+        const rows = body
+          .trim()
+          .split('\n')
+          .map(row => row.split('|').filter((cell: string) => cell.trim()));
 
         return `
           <div class="table-wrapper">
             <div class="table-wrapper-inner">
               <table>
-                ${cleanedContent}
+                <thead>
+                  <tr>
+                    ${headers.map(h => `<th>${h.trim()}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows.map(row => `
+                    <tr>
+                      ${row.map(cell => `<td>${cell.trim()}</td>`).join('')}
+                    </tr>
+                  `).join('')}
+                </tbody>
               </table>
             </div>
           </div>
@@ -1413,12 +1429,16 @@ export function DashboardComponent() {
                             {expandedGroups.includes(group.id) ? (
                               <>
                                 <FolderOpen className="h-4.5 w-4.5 text-primary transition-colors" />
-                                <ChevronDown className="h-4 w-4 text-primary/70 ml-0.5" />
+                                <ChevronDown 
+                                  className="h-4 w-4 text-primary/70 ml-0.5 transform transition-transform duration-300" 
+                                />
                               </>
                             ) : (
                               <>
                                 <Folder className="h-4.5 w-4.5 text-muted-foreground" />
-                                <ChevronRight className="h-4 w-4 text-muted-foreground ml-0.5" />
+                                <ChevronRight 
+                                  className="h-4 w-4 text-muted-foreground ml-0.5 transform transition-transform duration-300" 
+                                />
                               </>
                             )}
                           </div>
@@ -1475,118 +1495,121 @@ export function DashboardComponent() {
                       </DropdownMenu>
                     </header>
 
-                    {/* Chat Items */}
-                    <section className="p-2 space-y-1">
-                      {group.chats.map((chat) => (
-                        <article key={chat.id} className="relative group">
+                    {/* Add conditional rendering here */}
+                    {expandedGroups.includes(group.id) && (
+                      <section className="p-2 space-y-1">
+                        {/* Chat Items */}
+                        {group.chats.map((chat) => (
+                          <article key={chat.id} className="relative group">
+                            <Button
+                              variant="ghost"
+                              className={`w-full justify-center py-2 px-3 transition-all duration-200 ${
+                                currentChat?.id === chat.id
+                                  ? "bg-secondary/40 dark:bg-secondary/60"
+                                  : "hover:bg-secondary/20"
+                              } ${
+                                newItems[chat.id]
+                                  ? "bg-primary/5 dark:bg-primary/10"
+                                  : ""
+                              }`}
+                              onClick={() => {
+                                setCurrentChat({
+                                  ...chatTypes[chat.type],
+                                  id: chat.id,
+                                  name: chat.name,
+                                  createdAt: chat.createdAt,
+                                });
+                                setIsSidebarOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center w-full justify-center gap-2">
+                                <span
+                                  className={`${
+                                    chatTypes[chat.type]?.color
+                                  } transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}
+                                >
+                                  {chatTypes[chat.type]?.icon}
+                                </span>
+                                {renamingChatId === chat.id ? (
+                                  <input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        saveNewName();
+                                      }
+                                    }}
+                                    className="flex-1 px-2 py-1 text-base bg-background border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                ) : (
+                                  <span className="truncate text-base">
+                                    {chat.name}
+                                  </span>
+                                )}
+                              </div>
+                            </Button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 hover:bg-secondary/60 transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52">
+                                <DropdownMenuItem
+                                  onSelect={() => renameChat(group.id, chat.id)}
+                                  className="text-left text-base"
+                                >
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  <span>Rename Chat</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() => deleteChat(group.id, chat.id)}
+                                  className="text-left text-base text-red-600 focus:text-red-600"
+                                >
+                                  <Trash className="h-4 w-4 mr-2" />
+                                  <span>Delete Chat</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </article>
+                        ))}
+
+                        {/* New Chat Button */}
+                        <footer className="pt-2 mt-2 border-t border-border/40">
                           <Button
                             variant="ghost"
-                            className={`w-full justify-center py-2 px-3 transition-all duration-200 ${
-                              currentChat?.id === chat.id
-                                ? "bg-secondary/40 dark:bg-secondary/60"
-                                : "hover:bg-secondary/20"
-                            } ${
-                              newItems[chat.id]
-                                ? "bg-primary/5 dark:bg-primary/10"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              setCurrentChat({
-                                ...chatTypes[chat.type],
-                                id: chat.id,
-                                name: chat.name,
-                                createdAt: chat.createdAt,
-                              });
-                              setIsSidebarOpen(false);
-                            }}
+                            className="w-full justify-start py-3 hover:bg-primary/5 dark:hover:bg-primary/10 group transition-all duration-300"
+                            onClick={() => createNewChat(group.id)}
                           >
-                            <div className="flex items-center w-full justify-center gap-2">
-                              <span
-                                className={`${
-                                  chatTypes[chat.type]?.color
-                                } transition-transform duration-300 group-hover:scale-110 flex-shrink-0`}
-                              >
-                                {chatTypes[chat.type]?.icon}
-                              </span>
-                              {renamingChatId === chat.id ? (
-                                <input
-                                  type="text"
-                                  value={newName}
-                                  onChange={(e) => setNewName(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      e.preventDefault();
-                                      saveNewName();
-                                    }
-                                  }}
-                                  className="flex-1 px-2 py-1 text-base bg-background border rounded focus:outline-none focus:ring-1 focus:ring-primary"
-                                  autoFocus
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              ) : (
-                                <span className="truncate text-base">
-                                  {chat.name}
+                            <div className="flex items-center gap-2">
+                              <FilePlus className="h-4.5 w-4.5 text-primary transition-transform duration-300 group-hover:scale-110" />
+                              <div className="flex flex-col items-start">
+                                <span className="text-base font-medium text-primary">
+                                  Obrolan Baru
                                 </span>
-                              )}
+                                <span className="text-sm text-muted-foreground">
+                                  Buat obrolan di folder ini
+                                </span>
+                              </div>
                             </div>
                           </Button>
+                        </footer>
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 hover:bg-secondary/60 transition-opacity"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem
-                                onSelect={() => renameChat(group.id, chat.id)}
-                                className="text-left text-base"
-                              >
-                                <Pencil className="h-4 w-4 mr-2" />
-                                <span>Rename Chat</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => deleteChat(group.id, chat.id)}
-                                className="text-left text-base text-red-600 focus:text-red-600"
-                              >
-                                <Trash className="h-4 w-4 mr-2" />
-                                <span>Delete Chat</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </article>
-                      ))}
-
-                      {/* New Chat Button */}
-                      <footer className="pt-2 mt-2 border-t border-border/40">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start py-3 hover:bg-primary/5 dark:hover:bg-primary/10 group transition-all duration-300"
-                          onClick={() => createNewChat(group.id)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <FilePlus className="h-4.5 w-4.5 text-primary transition-transform duration-300 group-hover:scale-110" />
-                            <div className="flex flex-col items-start">
-                              <span className="text-base font-medium text-primary">
-                                Obrolan Baru
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                Buat obrolan di folder ini
-                              </span>
-                            </div>
-                          </div>
-                        </Button>
-                      </footer>
-
-                      <time className="px-2 py-2 text-sm text-muted-foreground/70 text-left">
-                        {format(group.createdAt, "MMM d, yyyy")}
-                      </time>
-                    </section>
+                        <time className="px-2 py-2 text-sm text-muted-foreground/70 text-left">
+                          {format(group.createdAt, "MMM d, yyyy")}
+                        </time>
+                      </section>
+                    )}
                   </article>
                 ))}
               </section>
@@ -1693,16 +1716,23 @@ export function DashboardComponent() {
                                 ),
                                 // ... other components
                                 table: ({ node, ...props }) => (
-                                  <table {...props} className="w-full" />
+                                  <div className="table-wrapper">
+                                    <div className="table-wrapper-inner">
+                                      <table {...props} className="w-full" />
+                                    </div>
+                                  </div>
                                 ),
                                 thead: ({ node, ...props }) => (
-                                  <thead {...props} className="bg-gradient" />
+                                  <thead {...props} className="bg-gradient-to-r from-primary/5 to-primary/10" />
                                 ),
                                 th: ({ node, ...props }) => (
-                                  <th {...props} className="table-header" />
+                                  <th {...props} className="px-4 py-3 text-left font-semibold border-b-2 border-border/30" />
                                 ),
                                 td: ({ node, ...props }) => (
-                                  <td {...props} className="table-cell" />
+                                  <td {...props} className="px-4 py-2.5 border-b border-border/20" />
+                                ),
+                                tr: ({ node, ...props }) => (
+                                  <tr {...props} className="hover:bg-primary/5 transition-colors duration-150" />
                                 ),
                               }}
                             >

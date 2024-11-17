@@ -116,28 +116,29 @@
 
     /* Tables */
     table {
-      @apply w-full my-6 border-collapse rounded-xl overflow-hidden border-2 border-border/30 shadow-sm table-fixed;
+      @apply w-full my-6 border-collapse rounded-xl overflow-hidden border-2 border-border/30;
       
       thead {
-        @apply bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/15;
+        @apply bg-gradient-to-r from-primary/5 to-primary/10;
+        
+        th {
+          @apply px-4 py-3 text-left font-semibold border-b-2 border-border/30;
+          white-space: normal;
+          min-width: 100px;
+        }
       }
-
-      th {
-        @apply px-4 py-3 text-left font-semibold border-b-2 border-border/30 text-primary/90;
-        font-size: 0.95rem;
-      }
-
-      td {
-        @apply px-4 py-2.5 border-b border-border/20 overflow-hidden text-ellipsis;
-        font-size: 0.925rem;
-        max-width: 1px;
-      }
-
+      
       tbody {
+        td {
+          @apply px-4 py-2.5 border-b border-border/20;
+          white-space: normal;
+          min-width: 100px;
+        }
+        
         tr:nth-child(even) {
           @apply bg-muted/30;
         }
-
+        
         tr:hover {
           @apply bg-primary/5 transition-colors duration-150;
         }
@@ -349,6 +350,20 @@
       @apply w-full h-full max-w-6xl mx-auto;
       @apply bg-background rounded-lg shadow-2xl overflow-hidden;
     }
+  }
+
+  /* Add these styles */
+  .group-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+  }
+
+  .group-content[data-state="open"] {
+    max-height: 1000px; /* Adjust based on your content */
+  }
+
+  .group-content[data-state="closed"] {
+    max-height: 0;
   }
 }
 
